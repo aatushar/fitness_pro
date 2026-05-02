@@ -14,7 +14,4 @@ class SignupRequestModel with _$SignupRequestModel {
 
   factory SignupRequestModel.fromJson(Map<String, dynamic> json) =>
       _$SignupRequestModelFromJson(json);
-
-  // toJson যোগ করুন
-  Map<String, dynamic> toJson() => _$SignupRequestModelToJson(this);
 }

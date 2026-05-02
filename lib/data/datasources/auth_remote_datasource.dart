@@ -13,9 +13,13 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
   @override
   Future<void> signup(SignupRequestModel request) async {
-    await _dio.post(
-      ApiEndpoints.signup,
-      data: request.toJson(),
-    );
+    try {
+      await _dio.post(
+        ApiEndpoints.signup,
+        data: request.toJson(),
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Server error');
+    }
   }
 }

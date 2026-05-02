@@ -15,12 +15,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     required List<String> role,
   }) async {
-    final model = SignupRequestModel(
+    await _datasource.signup(SignupRequestModel(
       username: username,
       email: email,
       password: password,
       role: role,
-    );
-    await _datasource.signup(model);
+    ));
   }
 }
