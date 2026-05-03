@@ -13,3 +13,13 @@ class SignupSubmitted extends AuthEvent {
     required this.role,
   });
 }
+
+class SigninSubmitted extends AuthEvent {
+  final String username;
+  final String password;
+
+  SigninSubmitted({
+    required this.username,
+    required this.password,
+  });
+}
