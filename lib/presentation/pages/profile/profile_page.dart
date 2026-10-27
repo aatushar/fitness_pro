@@ -22,7 +22,6 @@ class ProfilePage extends StatelessWidget {
 
     final bg         = isDark ? AppColors.darkBg         : AppColors.lightBg;
     final surface    = isDark ? AppColors.darkSurface     : AppColors.lightSurface;
-    final surfaceAlt = isDark ? AppColors.darkSurfaceAlt  : AppColors.lightSurfaceAlt;
     final border     = isDark ? AppColors.darkBorder      : AppColors.lightBorder;
     final textPrim   = isDark ? AppColors.darkTextPrim    : AppColors.lightTextPrim;
     final textMuted  = isDark ? AppColors.darkTextMuted   : AppColors.lightTextMuted;

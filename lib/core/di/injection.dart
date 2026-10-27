@@ -20,12 +20,29 @@ Future<void> setupDependencies() async {
   // Storage
   sl.registerLazySingleton(() => TokenStorage());
 
-  // Network
-  sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-    headers: {'Content-Type': 'application/json'},
-  )));
+  // Network - Configure for web compatibility
+  sl.registerLazySingleton<Dio>(() {
+    final dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {'Content-Type': 'application/json'},
+    ));
+    
+    // Add interceptor for better error handling
+    dio.interceptors.add(InterceptorsWrapper(
+      onError: (error, handler) {
+        // Detect CORS errors
+        if (error.type == DioExceptionType.connectionError ||
+            error.message?.contains('CORS') == true ||
+            error.message?.contains('Network') == true) {
+          throw Exception('Connection failed: Please check if the server is running and supports CORS');
+        }
+        handler.next(error);
+      },
+    ));
+    
+    return dio;
+  });
 
   // Datasources
   sl.registerLazySingleton<AuthRemoteDatasource>(
