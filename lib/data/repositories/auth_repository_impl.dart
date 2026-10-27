@@ -46,4 +46,10 @@ class AuthRepositoryImpl implements AuthRepository {
       roles:    response.roles,
     );
   }
+
+  @override
+  Future<void> signout() => _tokenStorage.clearAll();
+
+  @override
+  Future<String?> getSavedUsername() => _tokenStorage.getUsername();
 }

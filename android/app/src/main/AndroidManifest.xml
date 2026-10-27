@@ -1,7 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Needed to call the backend API (debug builds get it from the debug
+         manifest, but release builds would have no network without this). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- usesCleartextTraffic: the backend is plain http:// for now.
+         Remove this once the API is served over https://. -->
     <application
         android:label="fitness_pro"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

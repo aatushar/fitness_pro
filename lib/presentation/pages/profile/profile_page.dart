@@ -1,137 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/di/injection.dart';
-import '../../../core/storage/token_storage.dart';
+import '../../../core/layout/responsive.dart';
+import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
+import '../../../domain/entities/profile_entity.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_event.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_event.dart';
 import '../../blocs/profile/profile_state.dart';
-import '../../blocs/theme/theme_cubit.dart';
+import '../../widgets/theme_toggle_switch.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  bool _isDark(BuildContext context) =>
-      context.read<ThemeCubit>().state == ThemeMode.dark;
-
   @override
   Widget build(BuildContext context) {
-    final isDark = _isDark(context);
+    final palette = context.palette;
 
-    final bg         = isDark ? AppColors.darkBg         : AppColors.lightBg;
-    final surface    = isDark ? AppColors.darkSurface     : AppColors.lightSurface;
-    final border     = isDark ? AppColors.darkBorder      : AppColors.lightBorder;
-    final textPrim   = isDark ? AppColors.darkTextPrim    : AppColors.lightTextPrim;
-    final textMuted  = isDark ? AppColors.darkTextMuted   : AppColors.lightTextMuted;
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: BlocBuilder<ProfileBloc, ProfileState>(
-          builder: (context, state) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20, vertical: 20,
-              ),
-              child: Column(
-                children: [
-                  // ── Top bar ──────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (ctx, state) {
+        if (state is SignoutSuccess) ctx.go(AppRoutes.signin);
+        if (state is AuthFailure) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.errorSnack,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, state) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ResponsiveCenter(
+                  maxWidth: Breakpoints.formMaxWidth,
+                  child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: Container(
-                          width: 38, height: 38,
-                          decoration: BoxDecoration(
-                            color: surface,
-                            borderRadius: BorderRadius.circular(11),
-                            border: Border.all(color: border),
+                      // ── Top bar ──────────────────────────
+                      Row(
+                        children: [
+                          _BackButton(),
+                          Expanded(
+                            child: Text('My Profile',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700,
+                                color: palette.textPrimary, letterSpacing: -0.3,
+                              ),
+                            ),
                           ),
-                          child: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: textPrim, size: 16,
-                          ),
-                        ),
+                          const ThemeToggleSwitch(width: 46, height: 26),
+                        ],
                       ),
-                      Text('My Profile',
-                        style: GoogleFonts.inter(
-                          fontSize: 16, fontWeight: FontWeight.w700,
-                          color: textPrim, letterSpacing: -0.3,
-                        ),
-                      ),
-                      // Theme toggle
-                      GestureDetector(
-                        onTap: () => context.read<ThemeCubit>().toggleTheme(),
-                        child: Container(
-                          width: 38, height: 38,
-                          decoration: BoxDecoration(
-                            color: surface,
-                            borderRadius: BorderRadius.circular(11),
-                            border: Border.all(color: border),
+
+                      const SizedBox(height: 28),
+
+                      if (state is ProfileLoading || state is ProfileInitial)
+                        const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.purple,
                           ),
-                          child: Icon(
-                            isDark
-                                ? Icons.light_mode_rounded
-                                : Icons.dark_mode_rounded,
-                            color: AppColors.purple, size: 18,
-                          ),
-                        ),
-                      ),
+                        )
+                      else if (state is ProfileFailure)
+                        _ErrorView(message: state.message)
+                      else if (state is ProfileLoaded) ...[
+                        _Avatar(profile: state.profile),
+                        const SizedBox(height: 20),
+                        const _MiniStats(),
+                        const SizedBox(height: 16),
+                        _InfoCard(profile: state.profile),
+                        const SizedBox(height: 16),
+                        const _SignOutButton(),
+                      ],
                     ],
                   ),
-
-                  const SizedBox(height: 28),
-
-                  if (state is ProfileLoading)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.purple,
-                      ),
-                    )
-                  else if (state is ProfileFailure)
-                    _buildError(context, state.message, textPrim, textMuted)
-                  else if (state is ProfileLoaded) ...[
-                      // ── Avatar ────────────────────────
-                      _buildAvatar(state, isDark),
-
-                      const SizedBox(height: 20),
-
-                      // ── Mini stats ────────────────────
-                      _buildMiniStats(surface, border, textPrim, textMuted),
-
-                      const SizedBox(height: 16),
-
-                      // ── Info card ─────────────────────
-                      _buildInfoCard(
-                        context, state,
-                        surface, border, textPrim, textMuted, isDark,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Logout button ─────────────────
-                      _buildLogoutButton(context, isDark),
-                    ],
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
+}
 
-  // ── Avatar section ──────────────────────────────────────────
-  Widget _buildAvatar(ProfileLoaded state, bool isDark) {
-    final initial = state.profile.username.isNotEmpty
-        ? state.profile.username[0].toUpperCase()
+String _roleOf(ProfileEntity profile) => profile.roles.isNotEmpty
+    ? profile.roles.first.replaceAll('ROLE_', '')
+    : 'USER';
+
+// ── Back button ────────────────────────────────────────────────
+
+class _BackButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Semantics(
+      button: true,
+      label: 'Back',
+      child: GestureDetector(
+        // Opened directly by URL on web there is nothing to pop.
+        onTap: () => context.canPop()
+            ? context.pop()
+            : context.go(AppRoutes.dashboard),
+        child: Container(
+          width: 38, height: 38,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: palette.border),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: palette.textPrimary, size: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Avatar section ─────────────────────────────────────────────
+
+class _Avatar extends StatelessWidget {
+  final ProfileEntity profile;
+  const _Avatar({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final initial = profile.username.isNotEmpty
+        ? profile.username[0].toUpperCase()
         : 'U';
-    final role = state.profile.roles.isNotEmpty
-        ? state.profile.roles.first.replaceAll('ROLE_', '')
-        : 'USER';
 
     return Column(children: [
       Container(
@@ -139,7 +145,7 @@ class ProfilePage extends StatelessWidget {
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
-            colors: [Color(0xFF7B2FBE), Color(0xFFA855F7)],
+            colors: [AppColors.purple, AppColors.purpleLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -148,13 +154,11 @@ class ProfilePage extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark
-                ? const Color(0xFF1A1040)
-                : const Color(0xFF6D28D9),
+            color: palette.avatarFill,
           ),
           child: Center(
             child: Text(initial,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
                 fontSize: 32, fontWeight: FontWeight.w800,
                 color: Colors.white,
               ),
@@ -163,10 +167,11 @@ class ProfilePage extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
-      Text(state.profile.username,
-        style: GoogleFonts.inter(
+      Text(profile.username,
+        textAlign: TextAlign.center,
+        style: TextStyle(
           fontSize: 22, fontWeight: FontWeight.w800,
-          color: isDark ? AppColors.darkTextPrim : AppColors.lightTextPrim,
+          color: palette.textPrimary,
           letterSpacing: -0.4,
         ),
       ),
@@ -174,114 +179,94 @@ class ProfilePage extends StatelessWidget {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF1E1040)
-              : const Color(0xFFEDE9FE),
+          color: palette.tintPurple,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text('⚡ $role',
-          style: GoogleFonts.inter(
+        child: Text('⚡ ${_roleOf(profile)}',
+          style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w600,
-            color: isDark
-                ? const Color(0xFF9F87F5)
-                : const Color(0xFF6D28D9),
+            color: palette.roleText,
           ),
         ),
       ),
     ]);
   }
+}
 
-  // ── Mini stats ──────────────────────────────────────────────
-  Widget _buildMiniStats(
-      Color surface, Color border, Color textPrim, Color textMuted,
-      ) {
-    final stats = [
-      {'value': '248', 'label': 'Members'},
-      {'value': '34',  'label': 'Check-ins'},
-      {'value': '6',   'label': 'Trainers'},
-    ];
+// ── Mini stats ─────────────────────────────────────────────────
 
+class _MiniStats extends StatelessWidget {
+  const _MiniStats();
+
+  static const _stats = [
+    ('248', 'Members'),
+    ('34',  'Check-ins'),
+    ('6',   'Trainers'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
     return Row(
-      children: stats.map((s) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: border),
+      children: [
+        for (var i = 0; i < _stats.length; i++)
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(right: i < _stats.length - 1 ? 8 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: palette.border),
+              ),
+              child: Column(children: [
+                Text(_stats[i].$1,
+                  style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w800,
+                    color: palette.textPrimary, letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(_stats[i].$2,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 9, color: palette.textMuted),
+                ),
+              ]),
+            ),
           ),
-          child: Column(children: [
-            Text(s['value']!,
-              style: GoogleFonts.inter(
-                fontSize: 18, fontWeight: FontWeight.w800,
-                color: textPrim, letterSpacing: -0.3,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(s['label']!,
-              style: GoogleFonts.inter(
-                fontSize: 9, color: textMuted,
-              ),
-            ),
-          ]),
-        ),
-      )).toList(),
+      ],
     );
   }
+}
 
-  // ── Info card ───────────────────────────────────────────────
-  Widget _buildInfoCard(
-      BuildContext context,
-      ProfileLoaded state,
-      Color surface, Color border,
-      Color textPrim, Color textMuted,
-      bool isDark,
-      ) {
-    final role = state.profile.roles.isNotEmpty
-        ? state.profile.roles.first.replaceAll('ROLE_', '')
-        : 'USER';
+// ── Info card ──────────────────────────────────────────────────
+
+class _InfoCard extends StatelessWidget {
+  final ProfileEntity profile;
+  const _InfoCard({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final tintAlpha = context.isDarkTheme ? 0.2 : 0.12;
 
     final items = [
-      {
-        'icon': Icons.person_outline_rounded,
-        'color': 0xFF7B2FBE,
-        'label': 'Username',
-        'value': state.profile.username,
-      },
-      {
-        'icon': Icons.mail_outline_rounded,
-        'color': 0xFF10B981,
-        'label': 'Email',
-        'value': state.profile.email.isEmpty
-            ? 'Not provided'
-            : state.profile.email,
-      },
-      {
-        'icon': Icons.shield_outlined,
-        'color': 0xFF6D28D9,
-        'label': 'Role',
-        'value': role,
-      },
-      {
-        'icon': Icons.tag_rounded,
-        'color': 0xFF3B82F6,
-        'label': 'Member ID',
-        'value': '#${state.profile.id}',
-      },
+      (Icons.person_outline_rounded, AppColors.purple, 'Username', profile.username),
+      (Icons.mail_outline_rounded, AppColors.success, 'Email',
+          profile.email.isEmpty ? 'Not provided' : profile.email),
+      (Icons.shield_outlined, AppColors.purpleDeep, 'Role', _roleOf(profile)),
+      (Icons.tag_rounded, AppColors.info, 'Member ID', '#${profile.id}'),
     ];
 
     return Container(
       decoration: BoxDecoration(
-        color: surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
-        children: items.asMap().entries.map((e) {
-          final item = e.value;
-          final isLast = e.key == items.length - 1;
-          return Column(children: [
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 14,
@@ -290,101 +275,100 @@ class ProfilePage extends StatelessWidget {
                 Container(
                   width: 36, height: 36,
                   decoration: BoxDecoration(
-                    color: Color(item['color'] as int).withOpacity(
-                      isDark ? 0.2 : 0.12,
-                    ),
+                    color: items[i].$2.withValues(alpha: tintAlpha),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    item['icon'] as IconData,
-                    color: Color(item['color'] as int),
-                    size: 18,
-                  ),
+                  child: Icon(items[i].$1, color: items[i].$2, size: 18),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item['label'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 10, fontWeight: FontWeight.w600,
-                        color: textMuted, letterSpacing: 0.06,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(items[i].$3,
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: palette.textMuted, letterSpacing: 0.06,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(item['value'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 14, fontWeight: FontWeight.w600,
-                        color: textPrim,
+                      const SizedBox(height: 2),
+                      Text(items[i].$4,
+                        style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600,
+                          color: palette.textPrimary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ]),
             ),
-            if (!isLast)
-              Divider(height: 1, color: border, indent: 16, endIndent: 16),
-          ]);
-        }).toList(),
+            if (i < items.length - 1)
+              Divider(height: 1, color: palette.border, indent: 16, endIndent: 16),
+          ],
+        ],
       ),
     );
   }
+}
 
-  // ── Logout button ───────────────────────────────────────────
-  Widget _buildLogoutButton(BuildContext context, bool isDark) {
+// ── Sign out button ────────────────────────────────────────────
+
+class _SignOutButton extends StatelessWidget {
+  const _SignOutButton();
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () async {
-          await sl<TokenStorage>().clearAll();
-          if (context.mounted) context.go('/signin');
-        },
+        onPressed: () => context.read<AuthBloc>().add(SignoutRequested()),
         icon: const Icon(Icons.logout_rounded, size: 18),
-        label: Text('Sign Out',
-          style: GoogleFonts.inter(
-            fontSize: 15, fontWeight: FontWeight.w700,
+        label: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text('Sign Out',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark
-              ? const Color(0xFF2D0A0A)
-              : const Color(0xFFFFEBEB),
-          foregroundColor: const Color(0xFFEF4444),
+          backgroundColor: context.palette.dangerBg,
+          foregroundColor: AppColors.danger,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(
-              color: Color(0xFFEF4444),
-              width: 1,
-            ),
+            side: const BorderSide(color: AppColors.danger, width: 1),
           ),
           elevation: 0,
         ),
       ),
     );
   }
+}
 
-  // ── Error widget ────────────────────────────────────────────
-  Widget _buildError(
-      BuildContext context,
-      String message,
-      Color textPrim,
-      Color textMuted,
-      ) {
+// ── Error view ─────────────────────────────────────────────────
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  const _ErrorView({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
     return Column(children: [
       const SizedBox(height: 40),
       const Icon(Icons.error_outline_rounded,
-          color: Color(0xFFEF4444), size: 48),
+          color: AppColors.danger, size: 48),
       const SizedBox(height: 16),
       Text('Failed to load profile',
-        style: GoogleFonts.inter(
+        textAlign: TextAlign.center,
+        style: TextStyle(
           fontSize: 16, fontWeight: FontWeight.w700,
-          color: textPrim,
+          color: palette.textPrimary,
         ),
       ),
       const SizedBox(height: 8),
       Text(message,
-        style: GoogleFonts.inter(fontSize: 12, color: textMuted),
+        style: TextStyle(fontSize: 12, color: palette.textMuted),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 24),
@@ -397,8 +381,8 @@ class ProfilePage extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text('Retry',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        child: const Text('Retry',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     ]);

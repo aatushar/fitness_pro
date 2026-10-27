@@ -23,3 +23,5 @@ class SigninSubmitted extends AuthEvent {
     required this.password,
   });
 }
+
+class SignoutRequested extends AuthEvent {}

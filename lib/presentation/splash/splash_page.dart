@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/injection.dart';
-import '../../../core/storage/token_storage.dart';
+import '../../core/router/app_routes.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
+import '../widgets/app_logo_mark.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -16,60 +18,47 @@ class _SplashPageState extends State<SplashPage> {
     _navigate();
   }
 
+  // AppRouter's redirect sends a signed-in user on to the right dashboard.
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    final hasToken = await sl<TokenStorage>().hasToken();
-    if (mounted) {
-      hasToken ? context.go('/dashboard') : context.go('/signin');
-    }
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (mounted) context.go(AppRoutes.signin);
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A12),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72, height: 72,
-              decoration: BoxDecoration(
-                color: const Color(0xFF7B2FBE),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF7B2FBE).withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogoMark(size: 72),
+                const SizedBox(height: 20),
+                Text('Fitness Pro',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 26, fontWeight: FontWeight.w800,
+                    color: palette.textPrimary, letterSpacing: -0.5,
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.fitness_center_rounded,
-                color: Colors.white, size: 36,
-              ),
+                ),
+                const SizedBox(height: 8),
+                Text('Gym Management System',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: palette.textMuted),
+                ),
+                const SizedBox(height: 48),
+                const SizedBox(
+                  width: 24, height: 24,
+                  child: CircularProgressIndicator(
+                    color: AppColors.purple, strokeWidth: 2.5,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            const Text('Fitness Pro',
-              style: TextStyle(
-                fontSize: 26, fontWeight: FontWeight.w800,
-                color: Color(0xFFF0EDFF), letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text('Gym Management System',
-              style: TextStyle(fontSize: 13, color: Color(0xFF5A5A7A)),
-            ),
-            const SizedBox(height: 48),
-            const SizedBox(
-              width: 24, height: 24,
-              child: CircularProgressIndicator(
-                color: Color(0xFF7B2FBE), strokeWidth: 2.5,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -4,7 +4,8 @@ abstract class AuthState {}
 
 class AuthInitial   extends AuthState {}
 class AuthLoading   extends AuthState {}
-class AuthSuccess   extends AuthState {}
+class SignupSuccess extends AuthState {}
+class SignoutSuccess extends AuthState {}
 
 class SigninSuccess extends AuthState {
   final UserEntity user;

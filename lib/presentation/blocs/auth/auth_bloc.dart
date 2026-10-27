@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../domain/usecases/signin_usecase.dart';
+import '../../../domain/usecases/signout_usecase.dart';
 import '../../../domain/usecases/signup_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -7,10 +9,13 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignupUseCase _signupUseCase;
   final SigninUseCase _signinUseCase;
+  final SignoutUseCase _signoutUseCase;
 
-  AuthBloc(this._signupUseCase, this._signinUseCase) : super(AuthInitial()) {
+  AuthBloc(this._signupUseCase, this._signinUseCase, this._signoutUseCase)
+      : super(AuthInitial()) {
     on<SignupSubmitted>(_onSignupSubmitted);
     on<SigninSubmitted>(_onSigninSubmitted);
+    on<SignoutRequested>(_onSignoutRequested);
   }
 
   Future<void> _onSignupSubmitted(
@@ -25,9 +30,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
         role:     event.role,
       );
-      emit(AuthSuccess());
+      emit(SignupSuccess());
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      emit(AuthFailure(ApiException.messageOf(e)));
     }
   }
 
@@ -43,7 +48,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(SigninSuccess(user));
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      emit(AuthFailure(ApiException.messageOf(e)));
+    }
+  }
+
+  Future<void> _onSignoutRequested(
+      SignoutRequested event,
+      Emitter<AuthState> emit,
+      ) async {
+    try {
+      await _signoutUseCase();
+      emit(SignoutSuccess());
+    } catch (e) {
+      emit(AuthFailure(ApiException.messageOf(e)));
     }
   }
 }

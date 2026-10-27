@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/storage/token_storage.dart';
 import '../models/user_profile_model.dart';
 
@@ -17,15 +18,17 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   Future<UserProfileModel> getProfile() async {
     try {
       final token = await _tokenStorage.getToken();
-      final response = await _dio.get(
+      final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.profile,
         options: Options(headers: {
           'Authorization': 'Bearer $token',
         }),
       );
-      return UserProfileModel.fromJson(response.data);
+      final data = response.data;
+      if (data == null) throw const ApiException('Empty response from server.');
+      return UserProfileModel.fromJson(data);
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['message'] ?? 'Failed to load profile');
+      throw ApiException.fromDio(e);
     }
   }
 }

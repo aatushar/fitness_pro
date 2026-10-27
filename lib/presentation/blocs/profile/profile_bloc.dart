@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../domain/usecases/get_profile_usecase.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
@@ -19,7 +20,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final profile = await _getProfileUseCase();
       emit(ProfileLoaded(profile));
     } catch (e) {
-      emit(ProfileFailure(e.toString()));
+      emit(ProfileFailure(ApiException.messageOf(e)));
     }
   }
 }

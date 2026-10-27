@@ -1,51 +1,69 @@
-import 'package:fitness_pro/presentation/blocs/profile/profile_event.dart';
-import 'package:fitness_pro/presentation/pages/member/member_dashboard_page.dart';
-import 'package:fitness_pro/presentation/splash/splash_page.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/di/injection.dart';
 import '../../core/storage/token_storage.dart';
+import '../../presentation/blocs/current_user/current_user_cubit.dart';
 import '../../presentation/blocs/profile/profile_bloc.dart';
+import '../../presentation/blocs/profile/profile_event.dart';
 import '../../presentation/pages/auth/signin_page.dart';
 import '../../presentation/pages/auth/signup_page.dart';
 import '../../presentation/pages/dashboard/dashboard_page.dart';
+import '../../presentation/pages/member/member_dashboard_page.dart';
+import '../../presentation/pages/owner/owner_dashboard_page.dart';
 import '../../presentation/pages/profile/profile_page.dart';
-
+import '../../presentation/pages/trainer/trainer_dashboard_page.dart';
+import '../../presentation/splash/splash_page.dart';
+import 'app_routes.dart';
 
 class AppRouter {
   final TokenStorage tokenStorage;
   AppRouter(this.tokenStorage);
 
+  /// Dashboard for a signed-in user's backend roles. A user with several
+  /// roles gets the highest one: OWNER > MANAGER (admin) > TRAINER >
+  /// everyone else (ROLE_USER = gym member).
+  static String homeForRoles(List<String> roles) {
+    if (roles.contains('ROLE_OWNER'))   return AppRoutes.ownerDashboard;
+    if (roles.contains('ROLE_MANAGER')) return AppRoutes.dashboard;
+    if (roles.contains('ROLE_TRAINER')) return AppRoutes.trainerDashboard;
+    return AppRoutes.memberDashboard;
+  }
+
   late final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: AppRoutes.splash,
     redirect: (context, state) async {
+      final location = state.matchedLocation;
+      // Splash leaves on its own timer (to sign-in) and is redirected from there.
+      if (location == AppRoutes.splash) return null;
+
+      final onAuthPage =
+          location == AppRoutes.signin || location == AppRoutes.signup;
       final hasToken = await tokenStorage.hasToken();
-      final onAuth = state.matchedLocation == '/signin' ||
-          state.matchedLocation == '/signup' ||
-          state.matchedLocation == '/';
-      if (!hasToken && !onAuth) return '/signin';
-      if (hasToken && onAuth) {
-        // Token আছে — role দেখে navigate করো
-        final roles = await tokenStorage.getRoles();
-        if (roles.contains('ROLE_MEMBER')) return '/member-dashboard';
-        return '/dashboard';
+      if (!hasToken) return onAuthPage ? null : AppRoutes.signin;
+
+      // Token আছে — role দেখে সঠিক dashboard এ পাঠাও
+      final home = homeForRoles(await tokenStorage.getRoles());
+      if (onAuthPage) return home;
+      // A user may only open their own role's dashboard.
+      if (AppRoutes.dashboards.contains(location) && location != home) {
+        return home;
       }
       return null;
     },
     routes: [
-      GoRoute(path: '/',
+      GoRoute(path: AppRoutes.splash,
           builder: (_, __) => const SplashPage()),
-      GoRoute(path: '/signin',
+      GoRoute(path: AppRoutes.signin,
           builder: (_, __) => const SigninPage()),
-      GoRoute(path: '/signup',
+      GoRoute(path: AppRoutes.signup,
           builder: (_, __) => const SignupPage()),
-      GoRoute(path: '/dashboard',
-          builder: (_, __) => const DashboardPage()),
-      GoRoute(path: '/member-dashboard',
-          builder: (_, __) => const MemberDashboardPage()),
+      _dashboardRoute(AppRoutes.ownerDashboard, const OwnerDashboardPage()),
+      _dashboardRoute(AppRoutes.dashboard, const DashboardPage()),
+      _dashboardRoute(AppRoutes.trainerDashboard, const TrainerDashboardPage()),
+      _dashboardRoute(AppRoutes.memberDashboard, const MemberDashboardPage()),
       GoRoute(
-        path: '/profile',
+        path: AppRoutes.profile,
         builder: (_, __) => BlocProvider(
           create: (_) => sl<ProfileBloc>()..add(LoadProfile()),
           child: const ProfilePage(),
@@ -53,4 +71,14 @@ class AppRouter {
       ),
     ],
   );
+
+  /// Every dashboard shows the signed-in user's name, so each gets a
+  /// page-scoped [CurrentUserCubit].
+  static GoRoute _dashboardRoute(String path, Widget page) => GoRoute(
+        path: path,
+        builder: (_, __) => BlocProvider(
+          create: (_) => sl<CurrentUserCubit>()..load(),
+          child: page,
+        ),
+      );
 }

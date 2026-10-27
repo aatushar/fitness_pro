@@ -1,256 +1,176 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/di/injection.dart';
-import '../../../core/storage/token_storage.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../blocs/theme/theme_cubit.dart';
+import 'dart:math' as math;
 
-class MemberDashboardPage extends StatefulWidget {
-  const MemberDashboardPage({super.key});
-  @override
-  State<MemberDashboardPage> createState() => _MemberDashboardPageState();
+import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/dashboard/dashboard_cards.dart';
+import '../../widgets/dashboard/dashboard_header.dart';
+import '../../widgets/dashboard/dashboard_scaffold.dart';
+import '../../widgets/section_title.dart';
+
+// ── Sample data — later API থেকে আসবে ─────────────────────────
+
+const double _height     = 175;
+const double _weight     = 68;
+const double _goalWeight = 65;
+const double _bmi        = 22.4;
+const double _bodyFat    = 18.5;
+const int    _daysLeft   = 23;
+const int    _totalDays  = 90;
+const String _planName   = 'Premium · 3 Months';
+const String _startDate  = 'Oct 1, 2025';
+const String _endDate    = 'Dec 31, 2025';
+
+class _WeightPoint {
+  final String month;
+  final double weight;
+  const _WeightPoint(this.month, this.weight);
 }
 
-class _MemberDashboardPageState extends State<MemberDashboardPage> {
-  int _currentIndex = 0;
-  String _username  = '';
+const _weightHistory = [
+  _WeightPoint('May', 74.0),
+  _WeightPoint('Jun', 73.0),
+  _WeightPoint('Jul', 71.5),
+  _WeightPoint('Aug', 70.0),
+  _WeightPoint('Sep', 69.0),
+  _WeightPoint('Oct', 68.0),
+];
 
-  // Static sample data — later API থেকে আসবে
-  final double _height    = 175;
-  final double _weight    = 68;
-  final double _goalWeight= 65;
-  final double _bmi       = 22.4;
-  final double _bodyFat   = 18.5;
-  final int    _daysLeft  = 23;
-  final int    _totalDays = 90;
-  final String _planName  = 'Premium · 3 Months';
-  final String _startDate = 'Oct 1, 2025';
-  final String _endDate   = 'Dec 31, 2025';
+class _Workout {
+  final String icon;
+  final Color color;
+  final String name;
+  final String detail;
+  final bool done;
+  const _Workout(this.icon, this.color, this.name, this.detail, this.done);
+}
 
-  // Weight history (month, weight)
-  final List<Map<String, dynamic>> _weightHistory = [
-    {'month': 'May', 'weight': 74.0},
-    {'month': 'Jun', 'weight': 73.0},
-    {'month': 'Jul', 'weight': 71.5},
-    {'month': 'Aug', 'weight': 70.0},
-    {'month': 'Sep', 'weight': 69.0},
-    {'month': 'Oct', 'weight': 68.0},
-  ];
+const _workouts = [
+  _Workout('🏋️', AppColors.purple,  'Bench Press', '4 sets · 12 reps · 60 kg', true),
+  _Workout('🏃', AppColors.success, 'Treadmill',   '30 mins · 6 km/h',         true),
+  _Workout('💪', AppColors.info,    'Bicep Curls', '3 sets · 15 reps · 15 kg', false),
+  _Workout('🧘', AppColors.warning, 'Stretching',  '15 mins cool down',        false),
+];
 
-  final List<Map<String, dynamic>> _workouts = [
-    {'icon': '🏋️', 'color': 0xFF7B2FBE, 'name': 'Bench Press',
-      'detail': '4 sets · 12 reps · 60 kg', 'done': true},
-    {'icon': '🏃', 'color': 0xFF10B981, 'name': 'Treadmill',
-      'detail': '30 mins · 6 km/h', 'done': true},
-    {'icon': '💪', 'color': 0xFF3B82F6, 'name': 'Bicep Curls',
-      'detail': '3 sets · 15 reps · 15 kg', 'done': false},
-    {'icon': '🧘', 'color': 0xFFF59E0B, 'name': 'Stretching',
-      'detail': '15 mins cool down', 'done': false},
-  ];
+enum _DayStatus { done, today, rest }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUsername();
-  }
+const _weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const _weekStatus = [
+  _DayStatus.done, _DayStatus.done, _DayStatus.done, _DayStatus.today,
+  _DayStatus.rest, _DayStatus.rest, _DayStatus.rest,
+];
 
-  Future<void> _loadUsername() async {
-    final name = await sl<TokenStorage>().getUsername();
-    if (mounted) setState(() => _username = name ?? 'Member');
-  }
+const _navItems = [
+  AppNavItem(Icons.grid_view_rounded, 'Home'),
+  AppNavItem(Icons.fitness_center_rounded, 'Workout'),
+  AppNavItem(Icons.calendar_month_outlined, 'Schedule'),
+  AppNavItem(Icons.person_outline_rounded, 'Profile'),
+];
+const _trainerName = 'Johir Hasan';
 
-  bool get _isDark =>
-      context.read<ThemeCubit>().state == ThemeMode.dark;
+double get _progressPercent => (_totalDays - _daysLeft) / _totalDays;
 
-  Color get _bg        => _isDark ? AppColors.darkBg        : AppColors.lightBg;
-  Color get _surface   => _isDark ? AppColors.darkSurface    : AppColors.lightSurface;
-  Color get _surfaceAlt=> _isDark ? AppColors.darkSurfaceAlt : AppColors.lightSurfaceAlt;
-  Color get _border    => _isDark ? AppColors.darkBorder     : AppColors.lightBorder;
-  Color get _textPrim  => _isDark ? AppColors.darkTextPrim   : AppColors.lightTextPrim;
-  Color get _textMuted => _isDark ? AppColors.darkTextMuted  : AppColors.lightTextMuted;
+// ── Page ──────────────────────────────────────────────────────
 
-  double get _progressPercent =>
-      (_totalDays - _daysLeft) / _totalDays;
-
-  String get _bmiStatus {
-    if (_bmi < 18.5) return 'Underweight';
-    if (_bmi < 25)   return 'Normal';
-    if (_bmi < 30)   return 'Overweight';
-    return 'Obese';
-  }
-
-  Color get _bmiColor {
-    if (_bmi < 18.5) return const Color(0xFF3B82F6);
-    if (_bmi < 25)   return const Color(0xFF10B981);
-    if (_bmi < 30)   return const Color(0xFFF59E0B);
-    return const Color(0xFFEF4444);
-  }
+/// Member (ROLE_USER) dashboard: membership, body stats, progress
+/// (T_STRENGTH_LOG), today's workout and the assigned trainer (T_TRAINER_USERS).
+class MemberDashboardPage extends StatelessWidget {
+  const MemberDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ThemeCubit, ThemeMode>(
-      listener: (_, __) => setState(() {}),
-      builder: (context, _) => Scaffold(
-        backgroundColor: _bg,
-        body: SafeArea(
-          child: Column(children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    _buildSubscriptionCard(),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('Body Stats'),
-                    const SizedBox(height: 10),
-                    _buildBMIRow(),
-                    const SizedBox(height: 10),
-                    _buildBodyStatsRow(),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('Weight Progress'),
-                    const SizedBox(height: 10),
-                    _buildWeightGraph(),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle("Today's Workout"),
-                    const SizedBox(height: 10),
-                    _buildWorkoutCard(),
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              ),
-            ),
-            _buildBottomNav(),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  // ── Header ─────────────────────────────────────────────────
-  Widget _buildHeader() {
-    final initial = _username.isNotEmpty
-        ? _username[0].toUpperCase() : 'M';
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return const DashboardScaffold(
+      navItems: _navItems,
       children: [
-        Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7B2FBE), Color(0xFFA855F7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Center(
-              child: Text(initial,
-                style: GoogleFonts.inter(
-                  fontSize: 18, fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_username,
-              style: GoogleFonts.inter(
-                fontSize: 16, fontWeight: FontWeight.w700,
-                color: _textPrim, letterSpacing: -0.3,
-              ),
-            ),
-            Text('Premium Member',
-              style: GoogleFonts.inter(
-                fontSize: 11, color: _textMuted,
-              ),
-            ),
-          ]),
-        ]),
-        Row(children: [
-          // Theme toggle
-          GestureDetector(
-            onTap: () => context.read<ThemeCubit>().toggleTheme(),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              width: 46, height: 26,
-              decoration: BoxDecoration(
-                color: _surfaceAlt,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _border),
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 250),
-                alignment: _isDark
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                child: Container(
-                  width: 20, height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.purple,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isDark
-                        ? Icons.dark_mode_rounded
-                        : Icons.light_mode_rounded,
-                    color: Colors.white, size: 11,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(
-              color: _surface,
-              borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: _border),
-            ),
-            child: Stack(alignment: Alignment.center, children: [
-              Icon(Icons.notifications_none_rounded,
-                  color: AppColors.purple, size: 20),
-              Positioned(
-                top: 8, right: 8,
-                child: Container(
-                  width: 7, height: 7,
-                  decoration: const BoxDecoration(
-                    color: AppColors.purple,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ]),
-          ),
-        ]),
+        DashboardHeader(roleLabel: 'Premium Member', fallbackName: 'Member'),
+        SizedBox(height: 20),
+        _SubscriptionCard(),
+        SizedBox(height: 20),
+        SectionTitle('My Trainer'),
+        SizedBox(height: 10),
+        _MyTrainerCard(),
+        SizedBox(height: 20),
+        SectionTitle('Body Stats'),
+        SizedBox(height: 10),
+        _BmiRow(),
+        SizedBox(height: 10),
+        _BodyStatsRow(),
+        SizedBox(height: 20),
+        SectionTitle('Weight Progress'),
+        SizedBox(height: 10),
+        _WeightGraphCard(),
+        SizedBox(height: 20),
+        SectionTitle("Today's Workout"),
+        SizedBox(height: 10),
+        _WorkoutCard(),
+        SizedBox(height: 10),
       ],
     );
   }
+}
 
-  // ── Subscription Card ───────────────────────────────────────
-  Widget _buildSubscriptionCard() {
+// ── My Trainer ─────────────────────────────────────────────────
+
+class _MyTrainerCard extends StatelessWidget {
+  const _MyTrainerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return SurfaceCard(
+      child: Row(
+        children: [
+          const InitialsAvatar(initials: 'JH', color: AppColors.info),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_trainerName,
+                  style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    color: palette.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text('Strength coach · assigned since Oct 1',
+                  style: TextStyle(fontSize: 11, color: palette.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Flexible(
+            child: StatusChip(label: 'Beginner plan', tone: ChipTone.info),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Subscription Card ──────────────────────────────────────────
+
+class _SubscriptionCard extends StatelessWidget {
+  const _SubscriptionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    const smallWhite = TextStyle(fontSize: 10, color: Colors.white54);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E0A4E), Color(0xFF7B2FBE)],
+          colors: [AppColors.planGradientStart, AppColors.purple],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(
-          color: AppColors.purple.withOpacity(0.3),
+          color: AppColors.purple.withValues(alpha: 0.3),
           blurRadius: 20, offset: const Offset(0, 8),
         )],
       ),
@@ -258,35 +178,40 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('MEMBERSHIP PLAN',
-                  style: GoogleFonts.inter(
-                    fontSize: 10, fontWeight: FontWeight.w600,
-                    color: Colors.white60, letterSpacing: 0.08,
+              const Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('MEMBERSHIP PLAN',
+                    style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w600,
+                      color: Colors.white60, letterSpacing: 0.08,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(_planName,
-                  style: GoogleFonts.inter(
-                    fontSize: 15, fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                  SizedBox(height: 3),
+                  Text(_planName,
+                    style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ]),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('✓ Active',
-                  style: GoogleFonts.inter(
-                    fontSize: 11, fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                ]),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('✓ Active',
+                    style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -295,18 +220,18 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
 
           const SizedBox(height: 16),
 
-          RichText(text: TextSpan(
+          const Text.rich(TextSpan(
             children: [
               TextSpan(
                 text: '$_daysLeft ',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 32, fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
               ),
               TextSpan(
                 text: 'days left',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w500,
                   color: Colors.white60,
                 ),
@@ -317,18 +242,12 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
           const SizedBox(height: 12),
 
           // Progress bar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              Text(_startDate,
-                style: GoogleFonts.inter(
-                  fontSize: 10, color: Colors.white54,
-                ),
-              ),
-              Text(_endDate,
-                style: GoogleFonts.inter(
-                  fontSize: 10, color: Colors.white54,
-                ),
+              Expanded(child: Text(_startDate, style: smallWhite)),
+              Expanded(
+                child: Text(_endDate,
+                    textAlign: TextAlign.end, style: smallWhite),
               ),
             ],
           ),
@@ -338,23 +257,25 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
             child: LinearProgressIndicator(
               value: _progressPercent,
               minHeight: 7,
-              backgroundColor: Colors.white.withOpacity(0.15),
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
           const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${(_progressPercent * 100).toInt()}% completed',
-                style: GoogleFonts.inter(
-                  fontSize: 10, color: Colors.white54,
+              Expanded(
+                child: Text('${(_progressPercent * 100).toInt()}% completed',
+                  style: smallWhite,
                 ),
               ),
-              Text('Renew now →',
-                style: GoogleFonts.inter(
-                  fontSize: 10, fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              const Expanded(
+                child: Text('Renew now →',
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 10, fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -363,50 +284,80 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
       ),
     );
   }
+}
 
-  // ── BMI Row ─────────────────────────────────────────────────
-  Widget _buildBMIRow() {
-    return Row(children: [
-      Expanded(child: _buildStatCard(
-        emoji: '⚖️',
-        emojiColor: _isDark ? const Color(0xFF1E1040) : const Color(0xFFEDE9FE),
-        value: _bmi.toStringAsFixed(1),
-        label: 'BMI Index',
-        statusText: _bmiStatus,
-        statusColor: _bmiColor,
-      )),
-      const SizedBox(width: 10),
-      Expanded(child: _buildStatCard(
-        emoji: '💪',
-        emojiColor: _isDark ? const Color(0xFF0D3D28) : const Color(0xFFD1FAE5),
-        value: '${_bodyFat.toStringAsFixed(1)}%',
-        label: 'Body Fat',
-        statusText: 'Healthy',
-        statusColor: const Color(0xFF10B981),
-      )),
-    ]);
+// ── BMI Row ────────────────────────────────────────────────────
+
+class _BmiRow extends StatelessWidget {
+  const _BmiRow();
+
+  (String, Color) get _bmiStatus {
+    if (_bmi < 18.5) return ('Underweight', AppColors.info);
+    if (_bmi < 25)   return ('Normal', AppColors.success);
+    if (_bmi < 30)   return ('Overweight', AppColors.warning);
+    return ('Obese', AppColors.danger);
   }
 
-  Widget _buildStatCard({
-    required String emoji,
-    required Color emojiColor,
-    required String value,
-    required String label,
-    required String statusText,
-    required Color statusColor,
-  }) {
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final (bmiText, bmiColor) = _bmiStatus;
+    return IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(child: _StatCard(
+          emoji: '⚖️',
+          emojiBg: palette.tintPurple,
+          value: _bmi.toStringAsFixed(1),
+          label: 'BMI Index',
+          statusText: bmiText,
+          statusColor: bmiColor,
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          emoji: '💪',
+          emojiBg: palette.tintGreen,
+          value: '${_bodyFat.toStringAsFixed(1)}%',
+          label: 'Body Fat',
+          statusText: 'Healthy',
+          statusColor: AppColors.success,
+        )),
+      ]),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String emoji;
+  final Color emojiBg;
+  final String value;
+  final String label;
+  final String statusText;
+  final Color statusColor;
+
+  const _StatCard({
+    required this.emoji,
+    required this.emojiBg,
+    required this.value,
+    required this.label,
+    required this.statusText,
+    required this.statusColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            color: emojiColor,
+            color: emojiBg,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(child: Text(emoji,
@@ -414,23 +365,23 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
         ),
         const SizedBox(height: 10),
         Text(value,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 22, fontWeight: FontWeight.w800,
-            color: _textPrim, letterSpacing: -0.3,
+            color: palette.textPrimary, letterSpacing: -0.3,
           ),
         ),
         Text(label,
-          style: GoogleFonts.inter(fontSize: 11, color: _textMuted),
+          style: TextStyle(fontSize: 11, color: palette.textMuted),
         ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.15),
+            color: statusColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(statusText,
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontSize: 9, fontWeight: FontWeight.w700,
               color: statusColor,
             ),
@@ -439,82 +390,95 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
       ]),
     );
   }
+}
 
-  // ── Body Stats Row ──────────────────────────────────────────
-  Widget _buildBodyStatsRow() {
+// ── Body Stats Row ─────────────────────────────────────────────
+
+class _BodyStatsRow extends StatelessWidget {
+  const _BodyStatsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
     final stats = [
-      {'emoji': '📏', 'value': '${_height.toInt()}', 'unit': 'cm', 'label': 'Height'},
-      {'emoji': '⚖️', 'value': '${_weight.toInt()}', 'unit': 'kg', 'label': 'Weight'},
-      {'emoji': '🎯', 'value': '${_goalWeight.toInt()}', 'unit': 'kg', 'label': 'Goal'},
+      ('📏', '${_height.toInt()}', 'cm', 'Height'),
+      ('⚖️', '${_weight.toInt()}', 'kg', 'Weight'),
+      ('🎯', '${_goalWeight.toInt()}', 'kg', 'Goal'),
     ];
 
     return Row(
-      children: stats.map((s) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: _surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _border),
-          ),
-          child: Column(children: [
-            Text(s['emoji']!, style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 6),
-            RichText(text: TextSpan(
-              children: [
-                TextSpan(text: s['value'],
-                  style: GoogleFonts.inter(
-                    fontSize: 18, fontWeight: FontWeight.w800,
-                    color: _textPrim,
-                  ),
-                ),
-                TextSpan(text: ' ${s['unit']}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10, color: _textMuted,
-                  ),
-                ),
-              ],
-            )),
-            const SizedBox(height: 2),
-            Text(s['label']!,
-              style: GoogleFonts.inter(
-                fontSize: 9, color: _textMuted,
+      children: [
+        for (var i = 0; i < stats.length; i++)
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(right: i < stats.length - 1 ? 8 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: palette.border),
               ),
+              child: Column(children: [
+                Text(stats[i].$1, style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 6),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: stats[i].$2,
+                        style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w800,
+                          color: palette.textPrimary,
+                        ),
+                      ),
+                      TextSpan(text: ' ${stats[i].$3}',
+                        style: TextStyle(fontSize: 10, color: palette.textMuted),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 2),
+                Text(stats[i].$4,
+                  style: TextStyle(fontSize: 9, color: palette.textMuted),
+                ),
+              ]),
             ),
-          ]),
-        ),
-      )).toList(),
+          ),
+      ],
     );
   }
+}
 
-  // ── Weight Graph ────────────────────────────────────────────
-  Widget _buildWeightGraph() {
-    final maxW = _weightHistory
-        .map((e) => e['weight'] as double)
-        .reduce((a, b) => a > b ? a : b);
-    final minW = _weightHistory
-        .map((e) => e['weight'] as double)
-        .reduce((a, b) => a < b ? a : b);
-    final range = maxW - minW + 4;
+// ── Weight Graph ───────────────────────────────────────────────
+
+class _WeightGraphCard extends StatelessWidget {
+  const _WeightGraphCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final weights = _weightHistory.map((e) => e.weight).toList();
+    final maxW = weights.reduce(math.max);
+    final minW = weights.reduce(math.min);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Last 6 Months',
-                style: GoogleFonts.inter(
-                  fontSize: 13, fontWeight: FontWeight.w700,
-                  color: _textPrim,
+              Expanded(
+                child: Text('Last 6 Months',
+                  style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700,
+                    color: palette.textPrimary,
+                  ),
                 ),
               ),
               Container(
@@ -522,11 +486,11 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
                   horizontal: 10, vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.15),
+                  color: AppColors.purple.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text('Weight (kg)',
-                  style: GoogleFonts.inter(
+                child: const Text('Weight (kg)',
+                  style: TextStyle(
                     fontSize: 10, fontWeight: FontWeight.w600,
                     color: AppColors.purple,
                   ),
@@ -540,19 +504,17 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
           // Graph
           SizedBox(
             height: 100,
+            width: double.infinity,
             child: CustomPaint(
-              size: const Size(double.infinity, 100),
               painter: _WeightGraphPainter(
-                data: _weightHistory
-                    .map((e) => e['weight'] as double)
-                    .toList(),
+                data: weights,
                 minVal: minW - 2,
                 maxVal: maxW + 2,
                 lineColor: AppColors.purple,
-                fillColor: AppColors.purple.withOpacity(
-                  _isDark ? 0.2 : 0.1,
+                fillColor: AppColors.purple.withValues(
+                  alpha: context.isDarkTheme ? 0.2 : 0.1,
                 ),
-                dotColor: AppColors.purple,
+                dotBorderColor: Theme.of(context).colorScheme.surface,
               ),
             ),
           ),
@@ -561,88 +523,104 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
 
           // Month labels
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: _weightHistory.map((e) => Text(
-              e['month'] as String,
-              style: GoogleFonts.inter(
-                fontSize: 9, color: _textMuted,
-              ),
-            )).toList(),
+            children: [
+              for (final e in _weightHistory)
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(e.month,
+                      style: TextStyle(fontSize: 9, color: palette.textMuted),
+                    ),
+                  ),
+                ),
+            ],
           ),
 
           const SizedBox(height: 12),
 
           // Summary
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _graphStat('Start', '74 kg', _textMuted),
-              _graphStat('Lost', '↓ 6 kg', const Color(0xFF10B981)),
-              _graphStat('Current', '68 kg', AppColors.purple),
-              _graphStat('Goal', '65 kg', const Color(0xFFF59E0B)),
+              _GraphStat(label: 'Start', value: '74 kg', color: palette.textMuted),
+              const _GraphStat(label: 'Lost', value: '↓ 6 kg', color: AppColors.success),
+              const _GraphStat(label: 'Current', value: '68 kg', color: AppColors.purple),
+              const _GraphStat(label: 'Goal', value: '65 kg', color: AppColors.warning),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _graphStat(String label, String value, Color color) {
-    return Column(children: [
-      Text(value,
-        style: GoogleFonts.inter(
-          fontSize: 13, fontWeight: FontWeight.w700,
-          color: color,
+class _GraphStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _GraphStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(children: [
+        Text(value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w700,
+            color: color,
+          ),
         ),
-      ),
-      Text(label,
-        style: GoogleFonts.inter(fontSize: 9, color: _textMuted),
-      ),
-    ]);
+        Text(label,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 9, color: context.palette.textMuted),
+        ),
+      ]),
+    );
   }
+}
 
-  // ── Workout Card ────────────────────────────────────────────
-  Widget _buildWorkoutCard() {
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final dayStatus = ['done', 'done', 'done', 'today', 'rest', 'rest', 'rest'];
+// ── Workout Card ───────────────────────────────────────────────
+
+class _WorkoutCard extends StatelessWidget {
+  const _WorkoutCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final isDark = context.isDarkTheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(children: [
         // Day chips
         Row(
-          children: List.generate(7, (i) {
-            final status = dayStatus[i];
-            Color bg, fg;
-            if (status == 'today') {
-              bg = AppColors.purple; fg = Colors.white;
-            } else if (status == 'done') {
-              bg = _isDark
-                  ? const Color(0xFF1E1040)
-                  : const Color(0xFFEDE9FE);
-              fg = AppColors.purple;
-            } else {
-              bg = _isDark
-                  ? const Color(0xFF1A1A2E)
-                  : const Color(0xFFF0EEF8);
-              fg = _textMuted;
-            }
+          children: List.generate(_weekDays.length, (i) {
+            final (bg, fg) = switch (_weekStatus[i]) {
+              _DayStatus.today => (AppColors.purple, Colors.white),
+              _DayStatus.done  => (palette.tintPurple, AppColors.purple),
+              _DayStatus.rest  => (palette.surfaceAlt, palette.textMuted),
+            };
             return Expanded(
               child: Container(
-                margin: EdgeInsets.only(right: i < 6 ? 5 : 0),
+                margin: EdgeInsets.only(right: i < _weekDays.length - 1 ? 5 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
                   color: bg,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(days[i],
+                child: Text(_weekDays[i],
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: fg,
                   ),
@@ -655,122 +633,64 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
         const SizedBox(height: 14),
 
         // Workout items
-        ..._workouts.asMap().entries.map((e) {
-          final w = e.value;
-          final isLast = e.key == _workouts.length - 1;
-          return Column(children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: Color(w['color'] as int).withOpacity(
-                      _isDark ? 0.2 : 0.12,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
+        for (var i = 0; i < _workouts.length; i++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: _workouts[i].color.withValues(
+                    alpha: isDark ? 0.2 : 0.12,
                   ),
-                  child: Center(
-                    child: Text(w['icon'] as String,
-                        style: const TextStyle(fontSize: 16)),
-                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(w['name'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 13, fontWeight: FontWeight.w600,
-                        color: _textPrim,
-                      ),
-                    ),
-                    Text(w['detail'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 10, color: _textMuted,
-                      ),
-                    ),
-                  ],
-                )),
-                Text(
-                  (w['done'] as bool) ? '✅' : '⏳',
-                  style: const TextStyle(fontSize: 18),
+                child: Center(
+                  child: Text(_workouts[i].icon,
+                      style: const TextStyle(fontSize: 16)),
                 ),
-              ]),
-            ),
-            if (!isLast) Divider(height: 1, color: _border),
-          ]);
-        }),
-      ]),
-    );
-  }
-
-  // ── Section Title ───────────────────────────────────────────
-  Widget _buildSectionTitle(String title) {
-    return Text(title,
-      style: GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w700,
-        color: _textPrim, letterSpacing: -0.2,
-      ),
-    );
-  }
-
-  // ── Bottom Nav ──────────────────────────────────────────────
-  Widget _buildBottomNav() {
-    final items = [
-      {'icon': Icons.grid_view_rounded,       'label': 'Home'},
-      {'icon': Icons.fitness_center_rounded,  'label': 'Workout'},
-      {'icon': Icons.calendar_month_outlined, 'label': 'Schedule'},
-      {'icon': Icons.person_outline_rounded,  'label': 'Profile'},
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: _surface,
-        border: Border(top: BorderSide(color: _border)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: items.asMap().entries.map((e) {
-          final active = _currentIndex == e.key;
-          return GestureDetector(
-            onTap: () => setState(() => _currentIndex = e.key),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(e.value['icon'] as IconData,
-                color: active ? AppColors.purple : _textMuted,
-                size: 22,
               ),
-              const SizedBox(height: 4),
-              active
-                  ? Container(
-                width: 4, height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.purple,
-                  shape: BoxShape.circle,
-                ),
-              )
-                  : Text(e.value['label'] as String,
-                style: GoogleFonts.inter(
-                  fontSize: 9, color: _textMuted,
+              const SizedBox(width: 12),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_workouts[i].name,
+                    style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: palette.textPrimary,
+                    ),
+                  ),
+                  Text(_workouts[i].detail,
+                    style: TextStyle(fontSize: 10, color: palette.textMuted),
+                  ),
+                ],
+              )),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _workouts[i].done ? '✅' : '⏳',
+                  style: const TextStyle(fontSize: 18),
                 ),
               ),
             ]),
-          );
-        }).toList(),
-      ),
+          ),
+          if (i < _workouts.length - 1)
+            Divider(height: 1, color: palette.border),
+        ],
+      ]),
     );
   }
 }
 
-// ── Custom Graph Painter ────────────────────────────────────
+// ── Custom Graph Painter ───────────────────────────────────────
+
 class _WeightGraphPainter extends CustomPainter {
   final List<double> data;
   final double minVal;
   final double maxVal;
   final Color lineColor;
   final Color fillColor;
-  final Color dotColor;
+  final Color dotBorderColor;
 
   _WeightGraphPainter({
     required this.data,
@@ -778,69 +698,69 @@ class _WeightGraphPainter extends CustomPainter {
     required this.maxVal,
     required this.lineColor,
     required this.fillColor,
-    required this.dotColor,
+    required this.dotBorderColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
+    if (data.length < 2) return;
 
+    // Stroke and dot sizes were designed for a 100px-tall graph.
+    final scale = size.shortestSide / 100;
     final range = maxVal - minVal;
-    final points = <Offset>[];
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i / (data.length - 1) * size.width;
-      final y = size.height -
-          ((data[i] - minVal) / range * size.height);
-      points.add(Offset(x, y));
-    }
+    final points = <Offset>[
+      for (var i = 0; i < data.length; i++)
+        Offset(
+          i / (data.length - 1) * size.width,
+          size.height - ((data[i] - minVal) / range * size.height),
+        ),
+    ];
 
     // Fill
     final fillPath = Path()..moveTo(points.first.dx, size.height);
-    for (final p in points) fillPath.lineTo(p.dx, p.dy);
+    for (final p in points) {
+      fillPath.lineTo(p.dx, p.dy);
+    }
     fillPath
       ..lineTo(points.last.dx, size.height)
       ..close();
-
     canvas.drawPath(fillPath, Paint()..color = fillColor);
 
     // Line
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 2.5
+      ..strokeWidth = 2.5 * scale
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
     final linePath = Path()..moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      final cp1 = Offset(
-        (points[i - 1].dx + points[i].dx) / 2,
-        points[i - 1].dy,
-      );
-      final cp2 = Offset(
-        (points[i - 1].dx + points[i].dx) / 2,
-        points[i].dy,
-      );
+    for (var i = 1; i < points.length; i++) {
+      final midX = (points[i - 1].dx + points[i].dx) / 2;
       linePath.cubicTo(
-        cp1.dx, cp1.dy, cp2.dx, cp2.dy,
+        midX, points[i - 1].dy, midX, points[i].dy,
         points[i].dx, points[i].dy,
       );
     }
     canvas.drawPath(linePath, linePaint);
 
     // Dots
+    final dotRadius = 3.5 * scale;
+    final dotFill = Paint()..color = lineColor;
+    final dotBorder = Paint()
+      ..color = dotBorderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5 * scale;
     for (final p in points) {
-      canvas.drawCircle(p, 3.5,
-          Paint()..color = dotColor..style = PaintingStyle.fill);
-      canvas.drawCircle(p, 3.5,
-          Paint()
-            ..color = Colors.white
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5);
+      canvas.drawCircle(p, dotRadius, dotFill);
+      canvas.drawCircle(p, dotRadius, dotBorder);
     }
   }
 
   @override
-  bool shouldRepaint(_) => true;
+  bool shouldRepaint(_WeightGraphPainter old) =>
+      old.data != data ||
+      old.lineColor != lineColor ||
+      old.fillColor != fillColor ||
+      old.dotBorderColor != dotBorderColor;
 }
