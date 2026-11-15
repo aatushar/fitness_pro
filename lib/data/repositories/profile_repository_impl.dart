@@ -14,6 +14,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       username: model.username,
       email:    model.email ?? '',
       roles:    model.roles,
+      phone:    model.phone,
     );
   }
 }

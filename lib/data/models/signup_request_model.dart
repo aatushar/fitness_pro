@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'signup_request_model.freezed.dart';
@@ -10,6 +11,7 @@ class SignupRequestModel with _$SignupRequestModel {
     required String email,
     required String password,
     required List<String> role,
+    @JsonKey(includeIfNull: false) int? gymsId,
   }) = _SignupRequestModel;
 
   factory SignupRequestModel.fromJson(Map<String, dynamic> json) =>

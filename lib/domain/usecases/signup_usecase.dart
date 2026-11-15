@@ -9,11 +9,13 @@ class SignupUseCase {
     required String email,
     required String password,
     required List<String> role,
+    int? gymsId,
   }) =>
       _repo.signup(
         username: username,
         email: email,
         password: password,
         role: role,
+        gymsId: gymsId,
       );
 }

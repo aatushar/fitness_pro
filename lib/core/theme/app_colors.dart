@@ -45,6 +45,7 @@ class AppColors {
   static const purpleDeep     = Color(0xFF6D28D9);
   static const revenueGradientStart = Color(0xFF2D1060);
   static const planGradientStart    = Color(0xFF1E0A4E);
+  static const expiredGradientStart = Color(0xFF3B0D1A);
 
   // ── Status / accents (same in both themes) ─
   static const success        = Color(0xFF10B981);

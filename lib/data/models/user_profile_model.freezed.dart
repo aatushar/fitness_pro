@@ -24,6 +24,7 @@ mixin _$UserProfileModel {
   String get username => throw _privateConstructorUsedError;
   List<String> get roles => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
+  String? get phone => throw _privateConstructorUsedError;
   String? get jwtToken => throw _privateConstructorUsedError;
 
   /// Serializes this UserProfileModel to a JSON map.
@@ -47,6 +48,7 @@ abstract class $UserProfileModelCopyWith<$Res> {
       String username,
       List<String> roles,
       String? email,
+      String? phone,
       String? jwtToken});
 }
 
@@ -69,6 +71,7 @@ class _$UserProfileModelCopyWithImpl<$Res, $Val extends UserProfileModel>
     Object? username = null,
     Object? roles = null,
     Object? email = freezed,
+    Object? phone = freezed,
     Object? jwtToken = freezed,
   }) {
     return _then(_value.copyWith(
@@ -87,6 +90,10 @@ class _$UserProfileModelCopyWithImpl<$Res, $Val extends UserProfileModel>
       email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
               as String?,
       jwtToken: freezed == jwtToken
           ? _value.jwtToken
@@ -109,6 +116,7 @@ abstract class _$$UserProfileModelImplCopyWith<$Res>
       String username,
       List<String> roles,
       String? email,
+      String? phone,
       String? jwtToken});
 }
 
@@ -129,6 +137,7 @@ class __$$UserProfileModelImplCopyWithImpl<$Res>
     Object? username = null,
     Object? roles = null,
     Object? email = freezed,
+    Object? phone = freezed,
     Object? jwtToken = freezed,
   }) {
     return _then(_$UserProfileModelImpl(
@@ -148,6 +157,10 @@ class __$$UserProfileModelImplCopyWithImpl<$Res>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String?,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String?,
       jwtToken: freezed == jwtToken
           ? _value.jwtToken
           : jwtToken // ignore: cast_nullable_to_non_nullable
@@ -164,6 +177,7 @@ class _$UserProfileModelImpl implements _UserProfileModel {
       required this.username,
       required final List<String> roles,
       this.email,
+      this.phone,
       this.jwtToken})
       : _roles = roles;
 
@@ -185,11 +199,13 @@ class _$UserProfileModelImpl implements _UserProfileModel {
   @override
   final String? email;
   @override
+  final String? phone;
+  @override
   final String? jwtToken;
 
   @override
   String toString() {
-    return 'UserProfileModel(id: $id, username: $username, roles: $roles, email: $email, jwtToken: $jwtToken)';
+    return 'UserProfileModel(id: $id, username: $username, roles: $roles, email: $email, phone: $phone, jwtToken: $jwtToken)';
   }
 
   @override
@@ -202,6 +218,7 @@ class _$UserProfileModelImpl implements _UserProfileModel {
                 other.username == username) &&
             const DeepCollectionEquality().equals(other._roles, _roles) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.jwtToken, jwtToken) ||
                 other.jwtToken == jwtToken));
   }
@@ -209,7 +226,7 @@ class _$UserProfileModelImpl implements _UserProfileModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, username,
-      const DeepCollectionEquality().hash(_roles), email, jwtToken);
+      const DeepCollectionEquality().hash(_roles), email, phone, jwtToken);
 
   /// Create a copy of UserProfileModel
   /// with the given fields replaced by the non-null parameter values.
@@ -234,6 +251,7 @@ abstract class _UserProfileModel implements UserProfileModel {
       required final String username,
       required final List<String> roles,
       final String? email,
+      final String? phone,
       final String? jwtToken}) = _$UserProfileModelImpl;
 
   factory _UserProfileModel.fromJson(Map<String, dynamic> json) =
@@ -247,6 +265,8 @@ abstract class _UserProfileModel implements UserProfileModel {
   List<String> get roles;
   @override
   String? get email;
+  @override
+  String? get phone;
   @override
   String? get jwtToken;
 

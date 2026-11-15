@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../domain/entities/address_entity.dart';
+import '../../blocs/account/account_cubit.dart';
+import '../../widgets/form_dialog.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,6 +15,7 @@ import '../../blocs/auth/auth_state.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_event.dart';
 import '../../blocs/profile/profile_state.dart';
+import '../../widgets/app_back_button.dart';
 import '../../widgets/theme_toggle_switch.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -46,7 +50,7 @@ class ProfilePage extends StatelessWidget {
                       // ── Top bar ──────────────────────────
                       Row(
                         children: [
-                          _BackButton(),
+                          const AppBackButton(),
                           Expanded(
                             child: Text('My Profile',
                               textAlign: TextAlign.center,
@@ -73,9 +77,11 @@ class ProfilePage extends StatelessWidget {
                       else if (state is ProfileLoaded) ...[
                         _Avatar(profile: state.profile),
                         const SizedBox(height: 20),
-                        const _MiniStats(),
-                        const SizedBox(height: 16),
                         _InfoCard(profile: state.profile),
+                        const SizedBox(height: 16),
+                        _AccountActions(profile: state.profile),
+                        const SizedBox(height: 16),
+                        const _AddressSection(),
                         const SizedBox(height: 16),
                         const _SignOutButton(),
                       ],
@@ -96,35 +102,6 @@ String _roleOf(ProfileEntity profile) => profile.roles.isNotEmpty
     : 'USER';
 
 // ── Back button ────────────────────────────────────────────────
-
-class _BackButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Semantics(
-      button: true,
-      label: 'Back',
-      child: GestureDetector(
-        // Opened directly by URL on web there is nothing to pop.
-        onTap: () => context.canPop()
-            ? context.pop()
-            : context.go(AppRoutes.dashboard),
-        child: Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: palette.border),
-          ),
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: palette.textPrimary, size: 16,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ── Avatar section ─────────────────────────────────────────────
 
@@ -193,52 +170,6 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-// ── Mini stats ─────────────────────────────────────────────────
-
-class _MiniStats extends StatelessWidget {
-  const _MiniStats();
-
-  static const _stats = [
-    ('248', 'Members'),
-    ('34',  'Check-ins'),
-    ('6',   'Trainers'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Row(
-      children: [
-        for (var i = 0; i < _stats.length; i++)
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.only(right: i < _stats.length - 1 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: palette.border),
-              ),
-              child: Column(children: [
-                Text(_stats[i].$1,
-                  style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w800,
-                    color: palette.textPrimary, letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(_stats[i].$2,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 9, color: palette.textMuted),
-                ),
-              ]),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 // ── Info card ──────────────────────────────────────────────────
 
 class _InfoCard extends StatelessWidget {
@@ -254,6 +185,8 @@ class _InfoCard extends StatelessWidget {
       (Icons.person_outline_rounded, AppColors.purple, 'Username', profile.username),
       (Icons.mail_outline_rounded, AppColors.success, 'Email',
           profile.email.isEmpty ? 'Not provided' : profile.email),
+      (Icons.phone_outlined, AppColors.warning, 'Phone',
+          (profile.phone ?? '').isEmpty ? 'Not provided' : profile.phone!),
       (Icons.shield_outlined, AppColors.purpleDeep, 'Role', _roleOf(profile)),
       (Icons.tag_rounded, AppColors.info, 'Member ID', '#${profile.id}'),
     ];
@@ -308,6 +241,171 @@ class _InfoCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+// ── Edit profile / change password ─────────────────────────────
+
+class _AccountActions extends StatelessWidget {
+  final ProfileEntity profile;
+  const _AccountActions({required this.profile});
+
+  Future<void> _editProfile(BuildContext context) async {
+    final v = await showFormDialog(
+      context,
+      title: 'Edit profile',
+      fields: [
+        FormFieldSpec('Email',
+            initial: profile.email, keyboard: TextInputType.emailAddress),
+        FormFieldSpec('Phone',
+            initial: profile.phone ?? '', keyboard: TextInputType.phone),
+      ],
+      optional: {1},
+    );
+    if (v == null || !context.mounted) return;
+    final error = await context
+        .read<AccountCubit>()
+        .updateProfile(email: v[0], phone: v[1].isEmpty ? null : v[1]);
+    if (!context.mounted) return;
+    showMessage(context, error ?? 'Profile updated.', error: error != null);
+    if (error == null) context.read<ProfileBloc>().add(LoadProfile());
+  }
+
+  Future<void> _changePassword(BuildContext context) async {
+    final v = await showFormDialog(
+      context,
+      title: 'Change password',
+      confirmLabel: 'Change',
+      fields: const [
+        FormFieldSpec('Current password', obscure: true),
+        FormFieldSpec('New password (min 6)', obscure: true),
+      ],
+    );
+    if (v == null || !context.mounted) return;
+    final error = await context.read<AccountCubit>().changePassword(v[0], v[1]);
+    if (context.mounted) {
+      showMessage(context, error ?? 'Password changed.', error: error != null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Expanded(
+        child: OutlinedButton.icon(
+          onPressed: () => _editProfile(context),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Edit profile')),
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: OutlinedButton.icon(
+          onPressed: () => _changePassword(context),
+          icon: const Icon(Icons.lock_outline_rounded, size: 18),
+          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Password')),
+        ),
+      ),
+    ]);
+  }
+}
+
+// ── Addresses ──────────────────────────────────────────────────
+
+class _AddressSection extends StatelessWidget {
+  const _AddressSection();
+
+  static const _labels = [
+    'Street (min 5 chars)',
+    'Building name (min 5)',
+    'City (min 4)',
+    'State (min 2)',
+    'Country (min 2)',
+    'Pincode (min 5)',
+  ];
+
+  Future<void> _edit(BuildContext context, [AddressEntity? a]) async {
+    final initial = a == null
+        ? List.filled(6, '')
+        : [a.street, a.buildingName, a.city, a.state, a.country, a.pincode];
+    final v = await showFormDialog(
+      context,
+      title: a == null ? 'Add address' : 'Edit address',
+      fields: [
+        for (var i = 0; i < _labels.length; i++)
+          FormFieldSpec(_labels[i], initial: initial[i]),
+      ],
+    );
+    if (v == null || !context.mounted) return;
+    final error = await context.read<AccountCubit>().saveAddress(
+        addressId: a?.addressId,
+        street: v[0], buildingName: v[1], city: v[2],
+        state: v[3], country: v[4], pincode: v[5]);
+    if (context.mounted) {
+      showMessage(context, error ?? 'Address saved.', error: error != null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return BlocBuilder<AccountCubit, AccountState>(
+      builder: (context, state) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: palette.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(
+                  child: Text('My addresses',
+                    style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: palette.textPrimary)),
+                ),
+                TextButton.icon(
+                  onPressed: () => _edit(context),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add'),
+                ),
+              ]),
+              if (state.loading)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (state.addresses.isEmpty)
+                Text(state.message ?? 'No saved addresses.',
+                  style: TextStyle(fontSize: 12, color: palette.textMuted)),
+              for (final a in state.addresses)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: Text(a.oneLine, style: const TextStyle(fontSize: 13)),
+                  onTap: () => _edit(context, a),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.danger),
+                    onPressed: () async {
+                      final error = await context
+                          .read<AccountCubit>()
+                          .deleteAddress(a.addressId);
+                      if (context.mounted && error != null) {
+                        showMessage(context, error, error: true);
+                      }
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

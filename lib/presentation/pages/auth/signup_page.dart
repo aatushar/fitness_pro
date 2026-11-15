@@ -5,6 +5,8 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../domain/entities/gym_entity.dart';
+import '../../blocs/admin/gym_options_cubit.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -24,6 +26,7 @@ class _SignupPageState extends State<SignupPage> {
   final _emailCtrl    = TextEditingController();
   final _passwordCtrl = TextEditingController();
   String _selectedRole = 'manager';
+  int? _gymsId;
   bool   _obscurePass  = true;
 
   static const _roles = ['manager', 'trainer', 'member'];
@@ -50,6 +53,7 @@ class _SignupPageState extends State<SignupPage> {
       email:    _emailCtrl.text.trim(),
       password: _passwordCtrl.text,
       role:     [_selectedRole],
+      gymsId:   _gymsId,
     ));
   }
 
@@ -210,6 +214,32 @@ class _SignupPageState extends State<SignupPage> {
                             ),
                           ),
                       ],
+                    ),
+
+                    // ── Gym picker (hidden until gyms exist) ──
+                    BlocBuilder<GymOptionsCubit, List<GymEntity>>(
+                      builder: (context, gyms) {
+                        if (gyms.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: DropdownButtonFormField<int?>(
+                            isExpanded: true,
+                            initialValue: _gymsId,
+                            decoration: const InputDecoration(
+                              labelText: 'Gym',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              const DropdownMenuItem<int?>(
+                                  value: null, child: Text('No gym yet')),
+                              for (final g in gyms)
+                                DropdownMenuItem<int?>(
+                                    value: g.gymsId, child: Text(g.gymName)),
+                            ],
+                            onChanged: (v) => setState(() => _gymsId = v),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 28),

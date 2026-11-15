@@ -46,6 +46,10 @@ class ApiException implements Exception {
         if (serverMessage is String && serverMessage.isNotEmpty) {
           return ApiException(serverMessage);
         }
+        // Bean-validation errors arrive as {"field": "problem", ...}.
+        if (data is Map && data.isNotEmpty && data.values.every((v) => v is String)) {
+          return ApiException(data.values.join('\n'));
+        }
         return ApiException('Request failed with status: $statusCode');
       default:
         return ApiException(e.message ?? 'An unexpected error occurred.');

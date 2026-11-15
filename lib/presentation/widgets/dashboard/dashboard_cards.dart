@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
@@ -235,7 +236,10 @@ class QuickActionItem {
   final IconData icon;
   final String label;
   final Color color;
-  const QuickActionItem(this.icon, this.label, this.color);
+
+  /// Page to open on tap; null while the feature is not built yet.
+  final String? route;
+  const QuickActionItem(this.icon, this.label, this.color, {this.route});
 }
 
 class QuickActionRow extends StatelessWidget {
@@ -259,7 +263,9 @@ class QuickActionRow extends StatelessWidget {
                   side: BorderSide(color: palette.border),
                 ),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: items[i].route == null
+                      ? () {}
+                      : () => context.push(items[i].route!),
                   borderRadius: BorderRadius.circular(14),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(

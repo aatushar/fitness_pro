@@ -6,6 +6,7 @@ abstract class AuthRepository {
     required String email,
     required String password,
     required List<String> role,
+    int? gymsId,
   });
 
   Future<UserEntity> signin({

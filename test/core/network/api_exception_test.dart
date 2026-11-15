@@ -38,6 +38,15 @@ void main() {
       expect(e.message, 'Username taken');
     });
 
+    test('joins bean-validation errors ({"field": "problem"}) into one message', () {
+      final e = ApiException.fromDio(_badResponse(400, {
+        'amount': 'Amount must be greater than zero',
+        'months': 'must be greater than or equal to 1',
+      }));
+      expect(e.message,
+          'Amount must be greater than zero\nmust be greater than or equal to 1');
+    });
+
     test('falls back to the status code when the body has no message', () {
       final e = ApiException.fromDio(_badResponse(400, 'plain text'));
       expect(e.message, 'Request failed with status: 400');

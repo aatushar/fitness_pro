@@ -13,6 +13,7 @@ _$UserProfileModelImpl _$$UserProfileModelImplFromJson(
       username: json['username'] as String,
       roles: (json['roles'] as List<dynamic>).map((e) => e as String).toList(),
       email: json['email'] as String?,
+      phone: json['phone'] as String?,
       jwtToken: json['jwtToken'] as String?,
     );
 
@@ -23,5 +24,6 @@ Map<String, dynamic> _$$UserProfileModelImplToJson(
       'username': instance.username,
       'roles': instance.roles,
       'email': instance.email,
+      'phone': instance.phone,
       'jwtToken': instance.jwtToken,
     };

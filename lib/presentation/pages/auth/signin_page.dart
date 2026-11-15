@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
@@ -53,8 +54,7 @@ class _SigninPageState extends State<SigninPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (ctx, state) {
           if (state is SigninSuccess) {
-            // AppRouter's redirect forwards members to their own dashboard.
-            ctx.go(AppRoutes.dashboard);
+            ctx.go(AppRouter.homeForRoles(state.user.roles));
           }
           if (state is AuthFailure) {
             ScaffoldMessenger.of(ctx).showSnackBar(

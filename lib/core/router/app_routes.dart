@@ -1,3 +1,4 @@
+
 /// Single source of truth for route paths.
 class AppRoutes {
   AppRoutes._();
@@ -14,4 +15,15 @@ class AppRoutes {
     ownerDashboard, dashboard, trainerDashboard, memberDashboard,
   };
   static const profile         = '/profile';
+  static const notifications   = '/notifications';
+
+  /// Admin's gym-fee collection page (ROLE_MANAGER only).
+  static const memberSubscriptions = '/member-subscriptions';
+
+  static const adminUsers      = '/admin/users';
+  static const adminGyms       = '/admin/gyms';
+  static const trainerMembers  = '/trainer/members';
+
+  /// Pages only an admin (ROLE_MANAGER) may open.
+  static const adminOnly = {memberSubscriptions, adminUsers, adminGyms};
 }

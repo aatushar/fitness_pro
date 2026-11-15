@@ -9,6 +9,7 @@ class UserProfileModel with _$UserProfileModel {
     required String username,
     required List<String> roles,
     String? email,
+    String? phone,
     String? jwtToken,
   }) = _UserProfileModel;
 

@@ -36,7 +36,7 @@ void main() {
   });
 
   test('SignoutUseCase clears the session via the repository', () async {
-    await SignoutUseCase(repo)();
+    await SignoutUseCase(repo, FakeReminderScheduler())();
     expect(repo.calls, ['signout']);
   });
 

@@ -5,12 +5,14 @@ class SignupSubmitted extends AuthEvent {
   final String email;
   final String password;
   final List<String> role;
+  final int? gymsId;
 
   SignupSubmitted({
     required this.username,
     required this.email,
     required this.password,
     required this.role,
+    this.gymsId,
   });
 }
 

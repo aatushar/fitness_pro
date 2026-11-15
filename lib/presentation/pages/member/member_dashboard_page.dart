@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../blocs/notifications/notifications_cubit.dart';
+import '../../blocs/subscription/my_subscription_cubit.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/dashboard/dashboard_header.dart';
 import '../../widgets/dashboard/dashboard_scaffold.dart';
+import '../../widgets/subscription/member_subscription_card.dart';
 import '../../widgets/section_title.dart';
 
 // ── Sample data — later API থেকে আসবে ─────────────────────────
@@ -16,11 +20,6 @@ const double _weight     = 68;
 const double _goalWeight = 65;
 const double _bmi        = 22.4;
 const double _bodyFat    = 18.5;
-const int    _daysLeft   = 23;
-const int    _totalDays  = 90;
-const String _planName   = 'Premium · 3 Months';
-const String _startDate  = 'Oct 1, 2025';
-const String _endDate    = 'Dec 31, 2025';
 
 class _WeightPoint {
   final String month;
@@ -69,8 +68,6 @@ const _navItems = [
 ];
 const _trainerName = 'Johir Hasan';
 
-double get _progressPercent => (_totalDays - _daysLeft) / _totalDays;
-
 // ── Page ──────────────────────────────────────────────────────
 
 /// Member (ROLE_USER) dashboard: membership, body stats, progress
@@ -80,12 +77,17 @@ class MemberDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScaffold(
+    return DashboardScaffold(
       navItems: _navItems,
-      children: [
-        DashboardHeader(roleLabel: 'Premium Member', fallbackName: 'Member'),
+      // Pull down to pick up a renewal the admin just recorded.
+      onRefresh: () => Future.wait([
+        context.read<MySubscriptionCubit>().load(),
+        context.read<NotificationsCubit>().load(),
+      ]),
+      children: const [
+        DashboardHeader(roleLabel: 'Gym Member', fallbackName: 'Member'),
         SizedBox(height: 20),
-        _SubscriptionCard(),
+        MemberSubscriptionCard(),
         SizedBox(height: 20),
         SectionTitle('My Trainer'),
         SizedBox(height: 10),
@@ -143,142 +145,6 @@ class _MyTrainerCard extends StatelessWidget {
           const SizedBox(width: 8),
           const Flexible(
             child: StatusChip(label: 'Beginner plan', tone: ChipTone.info),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Subscription Card ──────────────────────────────────────────
-
-class _SubscriptionCard extends StatelessWidget {
-  const _SubscriptionCard();
-
-  @override
-  Widget build(BuildContext context) {
-    const smallWhite = TextStyle(fontSize: 10, color: Colors.white54);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.planGradientStart, AppColors.purple],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(
-          color: AppColors.purple.withValues(alpha: 0.3),
-          blurRadius: 20, offset: const Offset(0, 8),
-        )],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('MEMBERSHIP PLAN',
-                    style: TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w600,
-                      color: Colors.white60, letterSpacing: 0.08,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(_planName,
-                    style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ]),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('✓ Active',
-                    style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          const Text.rich(TextSpan(
-            children: [
-              TextSpan(
-                text: '$_daysLeft ',
-                style: TextStyle(
-                  fontSize: 32, fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              TextSpan(
-                text: 'days left',
-                style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w500,
-                  color: Colors.white60,
-                ),
-              ),
-            ],
-          )),
-
-          const SizedBox(height: 12),
-
-          // Progress bar
-          const Row(
-            children: [
-              Expanded(child: Text(_startDate, style: smallWhite)),
-              Expanded(
-                child: Text(_endDate,
-                    textAlign: TextAlign.end, style: smallWhite),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: _progressPercent,
-              minHeight: 7,
-              backgroundColor: Colors.white.withValues(alpha: 0.15),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Text('${(_progressPercent * 100).toInt()}% completed',
-                  style: smallWhite,
-                ),
-              ),
-              const Expanded(
-                child: Text('Renew now →',
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),

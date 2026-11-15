@@ -13,6 +13,7 @@ _$SignupRequestModelImpl _$$SignupRequestModelImplFromJson(
       email: json['email'] as String,
       password: json['password'] as String,
       role: (json['role'] as List<dynamic>).map((e) => e as String).toList(),
+      gymsId: (json['gymsId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$SignupRequestModelImplToJson(
@@ -22,4 +23,5 @@ Map<String, dynamic> _$$SignupRequestModelImplToJson(
       'email': instance.email,
       'password': instance.password,
       'role': instance.role,
+      if (instance.gymsId case final value?) 'gymsId': value,
     };

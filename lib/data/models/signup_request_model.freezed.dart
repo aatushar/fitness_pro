@@ -24,6 +24,8 @@ mixin _$SignupRequestModel {
   String get email => throw _privateConstructorUsedError;
   String get password => throw _privateConstructorUsedError;
   List<String> get role => throw _privateConstructorUsedError;
+  @JsonKey(includeIfNull: false)
+  int? get gymsId => throw _privateConstructorUsedError;
 
   /// Serializes this SignupRequestModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,7 +44,11 @@ abstract class $SignupRequestModelCopyWith<$Res> {
       _$SignupRequestModelCopyWithImpl<$Res, SignupRequestModel>;
   @useResult
   $Res call(
-      {String username, String email, String password, List<String> role});
+      {String username,
+      String email,
+      String password,
+      List<String> role,
+      @JsonKey(includeIfNull: false) int? gymsId});
 }
 
 /// @nodoc
@@ -64,6 +70,7 @@ class _$SignupRequestModelCopyWithImpl<$Res, $Val extends SignupRequestModel>
     Object? email = null,
     Object? password = null,
     Object? role = null,
+    Object? gymsId = freezed,
   }) {
     return _then(_value.copyWith(
       username: null == username
@@ -82,6 +89,10 @@ class _$SignupRequestModelCopyWithImpl<$Res, $Val extends SignupRequestModel>
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      gymsId: freezed == gymsId
+          ? _value.gymsId
+          : gymsId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -95,7 +106,11 @@ abstract class _$$SignupRequestModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String username, String email, String password, List<String> role});
+      {String username,
+      String email,
+      String password,
+      List<String> role,
+      @JsonKey(includeIfNull: false) int? gymsId});
 }
 
 /// @nodoc
@@ -115,6 +130,7 @@ class __$$SignupRequestModelImplCopyWithImpl<$Res>
     Object? email = null,
     Object? password = null,
     Object? role = null,
+    Object? gymsId = freezed,
   }) {
     return _then(_$SignupRequestModelImpl(
       username: null == username
@@ -133,6 +149,10 @@ class __$$SignupRequestModelImplCopyWithImpl<$Res>
           ? _value._role
           : role // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      gymsId: freezed == gymsId
+          ? _value.gymsId
+          : gymsId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -144,7 +164,8 @@ class _$SignupRequestModelImpl implements _SignupRequestModel {
       {required this.username,
       required this.email,
       required this.password,
-      required final List<String> role})
+      required final List<String> role,
+      @JsonKey(includeIfNull: false) this.gymsId})
       : _role = role;
 
   factory _$SignupRequestModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -165,8 +186,12 @@ class _$SignupRequestModelImpl implements _SignupRequestModel {
   }
 
   @override
+  @JsonKey(includeIfNull: false)
+  final int? gymsId;
+
+  @override
   String toString() {
-    return 'SignupRequestModel(username: $username, email: $email, password: $password, role: $role)';
+    return 'SignupRequestModel(username: $username, email: $email, password: $password, role: $role, gymsId: $gymsId)';
   }
 
   @override
@@ -179,13 +204,14 @@ class _$SignupRequestModelImpl implements _SignupRequestModel {
             (identical(other.email, email) || other.email == email) &&
             (identical(other.password, password) ||
                 other.password == password) &&
-            const DeepCollectionEquality().equals(other._role, _role));
+            const DeepCollectionEquality().equals(other._role, _role) &&
+            (identical(other.gymsId, gymsId) || other.gymsId == gymsId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, username, email, password,
-      const DeepCollectionEquality().hash(_role));
+      const DeepCollectionEquality().hash(_role), gymsId);
 
   /// Create a copy of SignupRequestModel
   /// with the given fields replaced by the non-null parameter values.
@@ -206,10 +232,12 @@ class _$SignupRequestModelImpl implements _SignupRequestModel {
 
 abstract class _SignupRequestModel implements SignupRequestModel {
   const factory _SignupRequestModel(
-      {required final String username,
-      required final String email,
-      required final String password,
-      required final List<String> role}) = _$SignupRequestModelImpl;
+          {required final String username,
+          required final String email,
+          required final String password,
+          required final List<String> role,
+          @JsonKey(includeIfNull: false) final int? gymsId}) =
+      _$SignupRequestModelImpl;
 
   factory _SignupRequestModel.fromJson(Map<String, dynamic> json) =
       _$SignupRequestModelImpl.fromJson;
@@ -222,6 +250,9 @@ abstract class _SignupRequestModel implements SignupRequestModel {
   String get password;
   @override
   List<String> get role;
+  @override
+  @JsonKey(includeIfNull: false)
+  int? get gymsId;
 
   /// Create a copy of SignupRequestModel
   /// with the given fields replaced by the non-null parameter values.

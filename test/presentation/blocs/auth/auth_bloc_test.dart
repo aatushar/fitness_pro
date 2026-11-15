@@ -15,7 +15,7 @@ void main() {
 
   setUp(() {
     repo = FakeAuthRepository();
-    bloc = AuthBloc(SignupUseCase(repo), SigninUseCase(repo), SignoutUseCase(repo));
+    bloc = AuthBloc(SignupUseCase(repo), SigninUseCase(repo), SignoutUseCase(repo, FakeReminderScheduler()));
   });
 
   tearDown(() => bloc.close());

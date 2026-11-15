@@ -26,7 +26,8 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
       );
       final data = response.data;
       if (data == null) throw const ApiException('Empty response from server.');
-      return UserProfileModel.fromJson(data);
+      // /api/profile calls the id field userId.
+      return UserProfileModel.fromJson({...data, 'id': data['id'] ?? data['userId']});
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
