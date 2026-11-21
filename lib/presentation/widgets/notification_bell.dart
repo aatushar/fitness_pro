@@ -5,6 +5,7 @@ import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_palette.dart';
 import '../blocs/notifications/notifications_cubit.dart';
+import '../../core/l10n/app_strings.dart';
 
 /// Bell icon in a bordered square. Shows a dot while there are unread
 /// notifications and opens the notifications page. Needs a
@@ -21,7 +22,7 @@ class NotificationBell extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: unread > 0 ? 'Notifications, $unread unread' : 'Notifications',
+      label: unread > 0 ? AppStrings.t(context, 'Notifications, $unread unread', 'নোটিফিকেশন, $unread টি অপঠিত') : 'Notifications'.tr(context),
       child: GestureDetector(
         onTap: () async {
           final cubit = context.read<NotificationsCubit>();

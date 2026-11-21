@@ -3,11 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../blocs/admin/admin_users_cubit.dart';
+import '../../blocs/age/age_cubit.dart';
+import '../../blocs/bmi/bmi_cubit.dart';
+import '../../widgets/age/age_calculator_card.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/bmi/bmi_card.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/dashboard/dashboard_header.dart';
 import '../../widgets/dashboard/dashboard_scaffold.dart';
 import '../../widgets/section_title.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Trainer (ROLE_TRAINER) dashboard: the gym's members.
 /// Needs an [AdminUsersCubit] in trainer mode.
@@ -30,9 +35,17 @@ class TrainerDashboardPage extends StatelessWidget {
         return DashboardScaffold(
           navItems: _navItems,
           navRoutes: const {1: AppRoutes.trainerMembers},
-          onRefresh: () => context.read<AdminUsersCubit>().load(),
+          onRefresh: () => Future.wait([
+            context.read<AdminUsersCubit>().load(),
+            context.read<AgeCubit>().load(),
+            context.read<BmiCubit>().load(),
+          ]),
           children: [
-            const DashboardHeader(roleLabel: 'Trainer', fallbackName: 'Trainer'),
+            DashboardHeader(roleLabel: 'Trainer'.tr(context), fallbackName: 'Trainer'.tr(context)),
+            const SizedBox(height: 20),
+            const AgeCalculatorCard(),
+            const SizedBox(height: 20),
+            const BmiCard(),
             const SizedBox(height: 20),
             if (state.status == LoadStatus.loading)
               const Padding(
@@ -44,10 +57,10 @@ class TrainerDashboardPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Center(
                   child: Column(children: [
-                    Text(state.message ?? 'Could not load members.'),
+                    Text(state.message ?? 'Could not load members.'.tr(context)),
                     TextButton(
                       onPressed: () => context.read<AdminUsersCubit>().load(),
-                      child: const Text('Try again'),
+                      child: Text('Try again'.tr(context)),
                     ),
                   ]),
                 ),
@@ -56,15 +69,15 @@ class TrainerDashboardPage extends StatelessWidget {
               GradientHeroCard(
                 startColor: AppColors.planGradientStart,
                 child: HeroFigure(
-                  caption: 'GYM MEMBERS',
+                  caption: 'GYM MEMBERS'.tr(context),
                   value: '${members.length}',
-                  note: '$active active',
+                  note: AppStrings.t(context, '$active active', '$active জন সক্রিয়'),
                 ),
               ),
               const SizedBox(height: 20),
-              const SectionTitle('Members'),
+              SectionTitle('Members'.tr(context)),
               const SizedBox(height: 10),
-              if (members.isEmpty) const Text('No members yet.'),
+              if (members.isEmpty) Text('No members yet.'.tr(context)),
               for (final m in members.take(8))
                 DashboardListTile(
                   leading: InitialsAvatar(
@@ -74,7 +87,7 @@ class TrainerDashboardPage extends StatelessWidget {
                   title: m.username,
                   subtitle: m.email,
                   trailing: StatusChip(
-                    label: m.isActive ? 'Active' : 'Inactive',
+                    label: m.isActive ? 'Active'.tr(context) : 'Inactive'.tr(context),
                     tone: m.isActive ? ChipTone.success : ChipTone.danger,
                   ),
                 ),

@@ -4,6 +4,7 @@ import '../../core/router/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_palette.dart';
 import '../widgets/app_logo_mark.dart';
+import '../../core/l10n/app_strings.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -37,15 +38,15 @@ class _SplashPageState extends State<SplashPage> {
               children: [
                 const AppLogoMark(size: 72),
                 const SizedBox(height: 20),
-                Text('Fitness Pro',
+                Text('Fitness Pro'.tr(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26, fontWeight: FontWeight.w800,
-                    color: palette.textPrimary, letterSpacing: -0.5,
+                    color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.5),
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('Gym Management System',
+                Text('Gym Management System'.tr(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: palette.textMuted),
                 ),

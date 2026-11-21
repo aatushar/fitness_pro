@@ -30,4 +30,10 @@ class ApiEndpoints {
   static const adminSubscriptionMembers  = '$baseUrl/api/admin/subscriptions/members';
   static const adminSubscriptionSummary  = '$baseUrl/api/admin/subscriptions/summary';
   static const notifications             = '$baseUrl/api/notifications';
+
+  // Age calculator: the user's saved birth date/time (any role)
+  static const ageCalculator = '$baseUrl/api/age-calculator';
+
+  // BMI readings and history (any role)
+  static const bmi = '$baseUrl/api/bmi';
 }

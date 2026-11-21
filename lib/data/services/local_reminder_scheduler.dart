@@ -4,6 +4,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import '../../domain/entities/subscription_entity.dart';
 import '../../domain/services/reminder_scheduler.dart';
+import '../../core/l10n/app_strings.dart';
 
 /// [ReminderScheduler] backed by `flutter_local_notifications`: the phone's own
 /// alarm manager shows the reminder, so it works with the app closed and
@@ -105,9 +106,9 @@ class LocalReminderScheduler implements ReminderScheduler {
         await _schedule(
           id: _warningId,
           at: times.warning,
-          title: 'Subscription ending soon',
+          title: 'Subscription ending soon'.trNow,
           body: 'Your gym subscription ends in 1 minute. '
-              'Please pay your Gym subscription fee.',
+              'Please pay your Gym subscription fee.'.trNow,
           mode: mode,
         );
       }
@@ -115,8 +116,8 @@ class LocalReminderScheduler implements ReminderScheduler {
         await _schedule(
           id: _dueId,
           at: times.due,
-          title: 'Subscription expired',
-          body: 'Please pay your Gym subscription fee.',
+          title: 'Subscription expired'.trNow,
+          body: 'Please pay your Gym subscription fee.'.trNow,
           mode: mode,
         );
       }
@@ -132,17 +133,17 @@ class LocalReminderScheduler implements ReminderScheduler {
       await _schedule(
         id: _warningId,
         at: times.warning,
-        title: 'Subscription ending soon',
+        title: 'Subscription ending soon'.trNow,
         body: 'Your gym subscription ends in $warningDays days. '
-            'Please pay your Gym subscription fee.',
+            'Please pay your Gym subscription fee.'.trNow,
       );
     }
     if (times.due.isAfter(now)) {
       await _schedule(
         id: _dueId,
         at: times.due,
-        title: 'Subscription expired',
-        body: 'Please pay your Gym subscription fee.',
+        title: 'Subscription expired'.trNow,
+        body: 'Please pay your Gym subscription fee.'.trNow,
       );
     }
   }
@@ -161,11 +162,11 @@ class LocalReminderScheduler implements ReminderScheduler {
       // The instant is what matters, so express it in UTC; no device time
       // zone lookup needed.
       scheduledDate: tz.TZDateTime.from(at, tz.UTC),
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
-          'Subscription reminders',
-          channelDescription: 'Reminds you to pay your gym subscription fee',
+          'Subscription reminders'.trNow,
+          channelDescription: 'Reminds you to pay your gym subscription fee'.trNow,
           importance: Importance.high,
           priority: Priority.high,
         ),

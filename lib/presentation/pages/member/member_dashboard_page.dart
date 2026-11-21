@@ -4,22 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../blocs/age/age_cubit.dart';
+import '../../blocs/bmi/bmi_cubit.dart';
 import '../../blocs/notifications/notifications_cubit.dart';
 import '../../blocs/subscription/my_subscription_cubit.dart';
+import '../../widgets/age/age_calculator_card.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/bmi/bmi_card.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/dashboard/dashboard_header.dart';
 import '../../widgets/dashboard/dashboard_scaffold.dart';
 import '../../widgets/subscription/member_subscription_card.dart';
 import '../../widgets/section_title.dart';
+import '../../../core/l10n/app_strings.dart';
 
 // ── Sample data — later API থেকে আসবে ─────────────────────────
 
 const double _height     = 175;
 const double _weight     = 68;
 const double _goalWeight = 65;
-const double _bmi        = 22.4;
-const double _bodyFat    = 18.5;
 
 class _WeightPoint {
   final String month;
@@ -83,27 +86,31 @@ class MemberDashboardPage extends StatelessWidget {
       onRefresh: () => Future.wait([
         context.read<MySubscriptionCubit>().load(),
         context.read<NotificationsCubit>().load(),
+        context.read<AgeCubit>().load(),
+        context.read<BmiCubit>().load(),
       ]),
-      children: const [
-        DashboardHeader(roleLabel: 'Gym Member', fallbackName: 'Member'),
+      children: [
+        DashboardHeader(roleLabel: 'Gym Member'.tr(context), fallbackName: 'Member'.tr(context)),
         SizedBox(height: 20),
         MemberSubscriptionCard(),
         SizedBox(height: 20),
-        SectionTitle('My Trainer'),
+        AgeCalculatorCard(),
+        SizedBox(height: 20),
+        BmiCard(),
+        SizedBox(height: 20),
+        SectionTitle('My Trainer'.tr(context)),
         SizedBox(height: 10),
         _MyTrainerCard(),
         SizedBox(height: 20),
-        SectionTitle('Body Stats'),
-        SizedBox(height: 10),
-        _BmiRow(),
+        SectionTitle('Body Stats'.tr(context)),
         SizedBox(height: 10),
         _BodyStatsRow(),
         SizedBox(height: 20),
-        SectionTitle('Weight Progress'),
+        SectionTitle('Weight Progress'.tr(context)),
         SizedBox(height: 10),
         _WeightGraphCard(),
         SizedBox(height: 20),
-        SectionTitle("Today's Workout"),
+        SectionTitle("Today's Workout".tr(context)),
         SizedBox(height: 10),
         _WorkoutCard(),
         SizedBox(height: 10),
@@ -136,124 +143,18 @@ class _MyTrainerCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text('Strength coach · assigned since Oct 1',
+                Text('Strength coach · assigned since Oct 1'.tr(context),
                   style: TextStyle(fontSize: 11, color: palette.textMuted),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          const Flexible(
-            child: StatusChip(label: 'Beginner plan', tone: ChipTone.info),
+          Flexible(
+            child: StatusChip(label: 'Beginner plan'.tr(context), tone: ChipTone.info),
           ),
         ],
       ),
-    );
-  }
-}
-
-// ── BMI Row ────────────────────────────────────────────────────
-
-class _BmiRow extends StatelessWidget {
-  const _BmiRow();
-
-  (String, Color) get _bmiStatus {
-    if (_bmi < 18.5) return ('Underweight', AppColors.info);
-    if (_bmi < 25)   return ('Normal', AppColors.success);
-    if (_bmi < 30)   return ('Overweight', AppColors.warning);
-    return ('Obese', AppColors.danger);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final (bmiText, bmiColor) = _bmiStatus;
-    return IntrinsicHeight(
-      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Expanded(child: _StatCard(
-          emoji: '⚖️',
-          emojiBg: palette.tintPurple,
-          value: _bmi.toStringAsFixed(1),
-          label: 'BMI Index',
-          statusText: bmiText,
-          statusColor: bmiColor,
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _StatCard(
-          emoji: '💪',
-          emojiBg: palette.tintGreen,
-          value: '${_bodyFat.toStringAsFixed(1)}%',
-          label: 'Body Fat',
-          statusText: 'Healthy',
-          statusColor: AppColors.success,
-        )),
-      ]),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String emoji;
-  final Color emojiBg;
-  final String value;
-  final String label;
-  final String statusText;
-  final Color statusColor;
-
-  const _StatCard({
-    required this.emoji,
-    required this.emojiBg,
-    required this.value,
-    required this.label,
-    required this.statusText,
-    required this.statusColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: palette.border),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(
-            color: emojiBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(child: Text(emoji,
-              style: const TextStyle(fontSize: 16))),
-        ),
-        const SizedBox(height: 10),
-        Text(value,
-          style: TextStyle(
-            fontSize: 22, fontWeight: FontWeight.w800,
-            color: palette.textPrimary, letterSpacing: -0.3,
-          ),
-        ),
-        Text(label,
-          style: TextStyle(fontSize: 11, color: palette.textMuted),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(statusText,
-            style: TextStyle(
-              fontSize: 9, fontWeight: FontWeight.w700,
-              color: statusColor,
-            ),
-          ),
-        ),
-      ]),
     );
   }
 }
@@ -267,9 +168,9 @@ class _BodyStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final stats = [
-      ('📏', '${_height.toInt()}', 'cm', 'Height'),
-      ('⚖️', '${_weight.toInt()}', 'kg', 'Weight'),
-      ('🎯', '${_goalWeight.toInt()}', 'kg', 'Goal'),
+      ('📏', '${_height.toInt()}', 'cm'.tr(context), 'Height'.tr(context)),
+      ('⚖️', '${_weight.toInt()}', 'kg'.tr(context), 'Weight'.tr(context)),
+      ('🎯', '${_goalWeight.toInt()}', 'kg'.tr(context), 'Goal'.tr(context)),
     ];
 
     return Row(
@@ -340,7 +241,7 @@ class _WeightGraphCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Last 6 Months',
+                child: Text('Last 6 Months'.tr(context),
                   style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w700,
                     color: palette.textPrimary,
@@ -355,7 +256,7 @@ class _WeightGraphCard extends StatelessWidget {
                   color: AppColors.purple.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('Weight (kg)',
+                child: Text('Weight (kg)'.tr(context),
                   style: TextStyle(
                     fontSize: 10, fontWeight: FontWeight.w600,
                     color: AppColors.purple,
@@ -394,7 +295,7 @@ class _WeightGraphCard extends StatelessWidget {
                 Expanded(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(e.month,
+                    child: Text(e.month.tr(context),
                       style: TextStyle(fontSize: 9, color: palette.textMuted),
                     ),
                   ),
@@ -407,10 +308,10 @@ class _WeightGraphCard extends StatelessWidget {
           // Summary
           Row(
             children: [
-              _GraphStat(label: 'Start', value: '74 kg', color: palette.textMuted),
-              const _GraphStat(label: 'Lost', value: '↓ 6 kg', color: AppColors.success),
-              const _GraphStat(label: 'Current', value: '68 kg', color: AppColors.purple),
-              const _GraphStat(label: 'Goal', value: '65 kg', color: AppColors.warning),
+              _GraphStat(label: 'Start'.tr(context), value: '74 kg'.tr(context), color: palette.textMuted),
+              _GraphStat(label: 'Lost'.tr(context), value: '↓ 6 kg'.tr(context), color: AppColors.success),
+              _GraphStat(label: 'Current'.tr(context), value: '68 kg'.tr(context), color: AppColors.purple),
+              _GraphStat(label: 'Goal'.tr(context), value: '65 kg'.tr(context), color: AppColors.warning),
             ],
           ),
         ],
@@ -520,13 +421,13 @@ class _WorkoutCard extends StatelessWidget {
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_workouts[i].name,
+                  Text(_workouts[i].name.tr(context),
                     style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
                   ),
-                  Text(_workouts[i].detail,
+                  Text(_workouts[i].detail.tr(context),
                     style: TextStyle(fontSize: 10, color: palette.textMuted),
                   ),
                 ],

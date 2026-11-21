@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_palette.dart';
+import '../../core/l10n/app_strings.dart';
 
 /// Small uppercase label above a filled, rounded text field (auth forms).
 class LabeledTextField extends StatelessWidget {
@@ -46,7 +47,7 @@ class LabeledTextField extends StatelessWidget {
         Text(label,
           style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w700,
-            color: palette.label, letterSpacing: 0.09,
+            color: palette.label, letterSpacing: AppStrings.spacing(0.09),
           ),
         ),
         const SizedBox(height: 6),

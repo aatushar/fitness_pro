@@ -5,11 +5,16 @@ import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/admin_dashboard_entity.dart';
 import '../../blocs/admin/admin_dashboard_cubit.dart';
 import '../../blocs/admin/admin_users_cubit.dart' show LoadStatus;
+import '../../blocs/age/age_cubit.dart';
+import '../../blocs/bmi/bmi_cubit.dart';
+import '../../widgets/age/age_calculator_card.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/bmi/bmi_card.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/dashboard/dashboard_header.dart';
 import '../../widgets/dashboard/dashboard_scaffold.dart';
 import '../../widgets/section_title.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Admin (ROLE_MANAGER) dashboard: runs one gym — members, trainers, fees.
 /// Needs an [AdminDashboardCubit].
@@ -40,20 +45,28 @@ class DashboardPage extends StatelessWidget {
         return DashboardScaffold(
           navItems: _navItems,
           navRoutes: const {1: AppRoutes.memberSubscriptions}, // Members tab
-          onRefresh: () => context.read<AdminDashboardCubit>().load(),
+          onRefresh: () => Future.wait([
+            context.read<AdminDashboardCubit>().load(),
+            context.read<AgeCubit>().load(),
+            context.read<BmiCubit>().load(),
+          ]),
           children: [
-            const DashboardHeader(
-                roleLabel: 'Admin · Gym Manager', fallbackName: 'Admin'),
+            DashboardHeader(
+                roleLabel: 'Admin · Gym Manager'.tr(context), fallbackName: 'Admin'.tr(context)),
+            const SizedBox(height: 20),
+            const AgeCalculatorCard(),
+            const SizedBox(height: 20),
+            const BmiCard(),
             const SizedBox(height: 20),
             if (d == null && state.status == LoadStatus.failure)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Center(
                   child: Column(children: [
-                    Text(state.message ?? 'Could not load the dashboard.'),
+                    Text(state.message ?? 'Could not load the dashboard.'.tr(context)),
                     TextButton(
                       onPressed: () => context.read<AdminDashboardCubit>().load(),
-                      child: const Text('Try again'),
+                      child: Text('Try again'.tr(context)),
                     ),
                   ]),
                 ),
@@ -68,13 +81,13 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 16),
               StatGrid(items: _stats(d)),
               const SizedBox(height: 20),
-              const SectionTitle('Quick Actions'),
+              SectionTitle('Quick Actions'.tr(context)),
               const SizedBox(height: 10),
               const QuickActionRow(items: _quickActions),
               const SizedBox(height: 20),
-              const SectionTitle('Recent Members'),
+              SectionTitle('Recent Members'.tr(context)),
               const SizedBox(height: 10),
-              if (state.recentMembers.isEmpty) const Text('No members yet.'),
+              if (state.recentMembers.isEmpty) Text('No members yet.'.tr(context)),
               for (final m in state.recentMembers)
                 DashboardListTile(
                   leading: InitialsAvatar(
@@ -84,7 +97,7 @@ class DashboardPage extends StatelessWidget {
                   title: m.username,
                   subtitle: m.email,
                   trailing: StatusChip(
-                    label: m.isActive ? 'Active' : 'Inactive',
+                    label: m.isActive ? 'Active'.tr(context) : 'Inactive'.tr(context),
                     tone: m.isActive ? ChipTone.success : ChipTone.danger,
                   ),
                 ),
@@ -118,10 +131,10 @@ class _RevenueCard extends StatelessWidget {
     final s = d.subscriptions;
     return GradientHeroCard(
       child: HeroFigure(
-        caption: 'COLLECTED THIS MONTH',
+        caption: 'COLLECTED THIS MONTH'.tr(context),
         value: '৳ ${s.collectedThisMonth.toStringAsFixed(0)}',
-        note: '${s.active} active · ${s.expired} expired members',
-        badge: '${s.notSubscribed} without a plan',
+        note: AppStrings.t(context, '${s.active} active · ${s.expired} expired members', '${s.active} সক্রিয় · ${s.expired} জনের মেয়াদ শেষ'),
+        badge: AppStrings.t(context, '${s.notSubscribed} without a plan', '${s.notSubscribed} জনের প্ল্যান নেই'),
       ),
     );
   }

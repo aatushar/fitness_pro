@@ -5,6 +5,7 @@ import '../models/activate_subscription_request_model.dart';
 import '../models/member_subscription_model.dart';
 import '../models/subscription_model.dart';
 import '../models/subscription_summary_model.dart';
+import '../../core/l10n/app_strings.dart';
 
 abstract class SubscriptionRemoteDatasource {
   Future<SubscriptionModel> getMySubscription();
@@ -69,7 +70,7 @@ class SubscriptionRemoteDatasourceImpl implements SubscriptionRemoteDatasource {
 
   Map<String, dynamic> _body(Response<Map<String, dynamic>> response) {
     final data = response.data;
-    if (data == null) throw const ApiException('Empty response from server.');
+    if (data == null) throw ApiException('Empty response from server.'.trNow);
     return data;
   }
 }

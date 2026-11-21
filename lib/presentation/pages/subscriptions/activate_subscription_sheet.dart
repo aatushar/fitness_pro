@@ -7,6 +7,7 @@ import '../../../core/theme/app_palette.dart';
 import '../../../domain/entities/member_subscription_entity.dart';
 import '../../../domain/entities/subscription_entity.dart';
 import '../../blocs/subscription/member_fees_cubit.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Payment methods the backend accepts, with their display names.
 const _methods = [
@@ -84,12 +85,16 @@ class _ActivateSheetState extends State<_ActivateSheet> {
     final minutes = _testMinutes;
     if (minutes != null) {
       final until = DateTime.now().add(Duration(minutes: minutes));
-      return 'Test plan: access for $minutes ${minutes == 1 ? 'minute' : 'minutes'}'
-          ' (until ${formatDateTime(until)})';
+      return AppStrings.t(
+          context,
+          'Test plan: access for $minutes ${minutes == 1 ? 'minute' : 'minutes'} (until ${formatDateTime(until)})',
+          'টেস্ট প্ল্যান: $minutes মিনিটের প্রবেশাধিকার (${formatDateTime(until)} পর্যন্ত)');
     }
     final renew = widget.member.status != SubscriptionStatus.none;
-    return 'Access until ${formatDate(_accessUntil)}'
-        '${renew ? ' (added after the current period)' : ''}';
+    return AppStrings.t(
+        context,
+        'Access until ${formatDate(_accessUntil)}${renew ? ' (added after the current period)' : ''}',
+        '${formatDate(_accessUntil)} পর্যন্ত প্রবেশাধিকার${renew ? ' (বর্তমান মেয়াদের পরে যোগ হবে)' : ''}');
   }
 
   DateTime get _accessUntil {
@@ -103,7 +108,7 @@ class _ActivateSheetState extends State<_ActivateSheet> {
   Future<void> _submit() async {
     final amount = double.tryParse(_amountCtrl.text.trim());
     if (amount == null || amount <= 0) {
-      setState(() => _error = 'Enter the amount received.');
+      setState(() => _error = 'Enter the amount received.'.tr(context));
       return;
     }
     setState(() {
@@ -133,10 +138,14 @@ class _ActivateSheetState extends State<_ActivateSheet> {
     Navigator.of(context).pop();
     widget.messenger.showSnackBar(SnackBar(
       content: Text(testMinutes != null
-          ? '${widget.member.username} has a $testMinutes-minute test plan. '
-              'Open the member app to see the reminders.'
-          : '${widget.member.username} can now use the gym until '
-              '${formatDate(until)}.'),
+          ? AppStrings.t(
+              context,
+              '${widget.member.username} has a $testMinutes-minute test plan. Open the member app to see the reminders.',
+              '${widget.member.username}-এর $testMinutes মিনিটের টেস্ট প্ল্যান চালু হয়েছে। রিমাইন্ডার দেখতে সদস্যের অ্যাপটি খুলুন।')
+          : AppStrings.t(
+              context,
+              '${widget.member.username} can now use the gym until ${formatDate(until)}.',
+              '${widget.member.username} এখন ${formatDate(until)} পর্যন্ত জিম ব্যবহার করতে পারবেন।')),
     ));
   }
 
@@ -153,7 +162,7 @@ class _ActivateSheetState extends State<_ActivateSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(renew ? 'Renew subscription' : 'Activate subscription',
+          Text(renew ? 'Renew subscription'.tr(context) : 'Activate subscription'.tr(context),
             style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.w800,
               color: palette.textPrimary,
@@ -165,14 +174,14 @@ class _ActivateSheetState extends State<_ActivateSheet> {
           ),
           const SizedBox(height: 20),
 
-          _label(palette, 'DURATION'),
+          _label(palette, 'DURATION'.tr(context)),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               for (final m in _durations)
                 ChoiceChip(
-                  label: Text(m == 1 ? '1 month' : '$m months'),
+                  label: Text(m == 1 ? '1 month'.tr(context) : AppStrings.t(context, '$m months', '$m মাস')),
                   selected: _testMinutes == null && _months == m,
                   selectedColor: AppColors.purple,
                   labelStyle: TextStyle(
@@ -192,14 +201,14 @@ class _ActivateSheetState extends State<_ActivateSheet> {
           // Only in debug builds, so a real gym can never pick it by accident.
           if (kDebugMode) ...[
             const SizedBox(height: 12),
-            _label(palette, 'TEST PLAN (TRY THE REMINDERS)'),
+            _label(palette, 'TEST PLAN (TRY THE REMINDERS)'.tr(context)),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 for (final m in _testMinutesOptions)
                   ChoiceChip(
-                    label: Text(m == 1 ? '1 minute' : '$m minutes'),
+                    label: Text(m == 1 ? '1 minute'.tr(context) : AppStrings.t(context, '$m minutes', '$m মিনিট')),
                     selected: _testMinutes == m,
                     selectedColor: AppColors.warning,
                     labelStyle: TextStyle(
@@ -214,7 +223,7 @@ class _ActivateSheetState extends State<_ActivateSheet> {
           ],
           const SizedBox(height: 18),
 
-          _label(palette, 'AMOUNT RECEIVED (৳)'),
+          _label(palette, 'AMOUNT RECEIVED (৳)'.tr(context)),
           TextField(
             controller: _amountCtrl,
             enabled: !_saving,
@@ -223,14 +232,14 @@ class _ActivateSheetState extends State<_ActivateSheet> {
           ),
           const SizedBox(height: 18),
 
-          _label(palette, 'PAYMENT METHOD'),
+          _label(palette, 'PAYMENT METHOD'.tr(context)),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               for (final (value, name) in _methods)
                 ChoiceChip(
-                  label: Text(name),
+                  label: Text(name.tr(context)),
                   selected: _method == value,
                   selectedColor: AppColors.purple,
                   labelStyle: TextStyle(
@@ -242,12 +251,12 @@ class _ActivateSheetState extends State<_ActivateSheet> {
           ),
           const SizedBox(height: 18),
 
-          _label(palette, 'NOTE (OPTIONAL)'),
+          _label(palette, 'NOTE (OPTIONAL)'.tr(context)),
           TextField(
             controller: _noteCtrl,
             enabled: !_saving,
             maxLength: 255,
-            decoration: _inputDecoration(context, 'e.g. paid by the member\'s brother'),
+            decoration: _inputDecoration(context, 'e.g. paid by the member\'s brother'.tr(context)),
           ),
           const SizedBox(height: 10),
 
@@ -294,9 +303,9 @@ class _ActivateSheetState extends State<_ActivateSheet> {
                         strokeWidth: 2, color: Colors.white,
                       ),
                     )
-                  : const FittedBox(
+                  : FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text('Confirm & give access'),
+                      child: Text('Confirm & give access'.tr(context)),
                     ),
             ),
           ),
@@ -310,7 +319,7 @@ class _ActivateSheetState extends State<_ActivateSheet> {
         child: Text(text,
           style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w700,
-            color: palette.label, letterSpacing: 0.09,
+            color: palette.label, letterSpacing: AppStrings.spacing(0.09),
           ),
         ),
       );

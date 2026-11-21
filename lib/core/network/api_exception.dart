@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../l10n/app_strings.dart';
 
 /// The only error type datasources throw; [message] is safe to show to the user.
 class ApiException implements Exception {
@@ -15,31 +16,31 @@ class ApiException implements Exception {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return const ApiException(
-            'Connection timed out. Please check your internet connection.');
+        return ApiException(
+            'Connection timed out. Please check your internet connection.'.trNow);
       case DioExceptionType.connectionError:
         final message = e.message?.toLowerCase() ?? '';
         if (message.contains('cors') ||
             message.contains('origin') ||
             message.contains('blocked')) {
-          return const ApiException(
-              'CORS error: Server is not allowing requests from this origin. Please contact the developer.');
+          return ApiException(
+              'CORS error: Server is not allowing requests from this origin. Please contact the developer.'.trNow);
         }
-        return const ApiException(
-            'Cannot connect to server. Please check if the server is running.');
+        return ApiException(
+            'Cannot connect to server. Please check if the server is running.'.trNow);
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
         final override = statusMessages[statusCode];
         if (override != null) return ApiException(override);
         switch (statusCode) {
           case 401:
-            return const ApiException('Session expired. Please sign in again.');
+            return ApiException('Session expired. Please sign in again.'.trNow);
           case 403:
-            return const ApiException('Access denied.');
+            return ApiException('Access denied.'.trNow);
           case 404:
-            return const ApiException('Server endpoint not found.');
+            return ApiException('Server endpoint not found.'.trNow);
           case 500:
-            return const ApiException('Server error. Please try again later.');
+            return ApiException('Server error. Please try again later.'.trNow);
         }
         final data = e.response?.data;
         final serverMessage = data is Map ? data['message'] : null;
@@ -50,9 +51,11 @@ class ApiException implements Exception {
         if (data is Map && data.isNotEmpty && data.values.every((v) => v is String)) {
           return ApiException(data.values.join('\n'));
         }
-        return ApiException('Request failed with status: $statusCode');
+        return ApiException(AppStrings.tNow(
+            'Request failed with status: $statusCode',
+            'অনুরোধ ব্যর্থ হয়েছে (স্ট্যাটাস: $statusCode)'));
       default:
-        return ApiException(e.message ?? 'An unexpected error occurred.');
+        return ApiException(e.message ?? 'An unexpected error occurred.'.trNow);
     }
   }
 
@@ -60,7 +63,7 @@ class ApiException implements Exception {
   /// message, or a generic fallback so raw exceptions never reach the UI.
   static String messageOf(Object error) => error is ApiException
       ? error.message
-      : 'Something went wrong. Please try again.';
+      : 'Something went wrong. Please try again.'.trNow;
 
   @override
   String toString() => message;

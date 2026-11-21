@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/router/app_routes.dart';
 import '../../core/theme/app_palette.dart';
+import '../../core/l10n/app_strings.dart';
 
 /// Bordered square back button used in page top bars.
 class AppBackButton extends StatelessWidget {
@@ -12,7 +13,7 @@ class AppBackButton extends StatelessWidget {
     final palette = context.palette;
     return Semantics(
       button: true,
-      label: 'Back',
+      label: 'Back'.tr(context),
       child: GestureDetector(
         // Opened directly by URL on web there is nothing to pop.
         onTap: () => context.canPop()

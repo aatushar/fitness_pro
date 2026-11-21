@@ -13,7 +13,7 @@ import '../../blocs/auth/auth_state.dart';
 import '../../widgets/app_logo_mark.dart';
 import '../../widgets/labeled_divider.dart';
 import '../../widgets/labeled_text_field.dart';
-import '../../widgets/theme_toggle_switch.dart';
+import '../../../core/l10n/app_strings.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -44,7 +44,7 @@ class _SignupPageState extends State<SignupPage> {
         _emailCtrl.text.trim().isEmpty ||
         _passwordCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        SnackBar(content: Text('Please fill all fields'.tr(context))),
       );
       return;
     }
@@ -66,8 +66,8 @@ class _SignupPageState extends State<SignupPage> {
         listener: (ctx, state) {
           if (state is SignupSuccess) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(
-                content: Text('Account created successfully! Please sign in.'),
+              SnackBar(
+                content: Text('Account created successfully! Please sign in.'.tr(context)),
                 backgroundColor: AppColors.purple,
               ),
             );
@@ -95,21 +95,18 @@ class _SignupPageState extends State<SignupPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Top bar ────────────────────────────
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppLogoMark(),
-                        ThemeToggleSwitch(),
-                      ],
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppLogoMark(),
                     ),
 
                     const SizedBox(height: 28),
 
                     // ── Headline ───────────────────────────
-                    Text('Create account',
+                    Text('Create account'.tr(context),
                       style: TextStyle(
                         fontSize: 28, fontWeight: FontWeight.w800,
-                        color: palette.textPrimary, letterSpacing: -0.6,
+                        color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.6),
                       ),
                     ),
 
@@ -133,16 +130,16 @@ class _SignupPageState extends State<SignupPage> {
                             style: TextStyle(
                               fontSize: 12, color: palette.textMuted,
                             ),
-                            children: const [
-                              TextSpan(text: 'Join '),
+                            children: [
+                              TextSpan(text: AppStrings.t(context, 'Join ', '')),
                               TextSpan(
-                                text: '2,400+ ',
+                                text: AppStrings.digits('2,400+ '),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.purple,
                                 ),
                               ),
-                              TextSpan(text: 'gym managers'),
+                              TextSpan(text: AppStrings.t(context, 'gym managers', 'জন জিম ম্যানেজারের সাথে যোগ দিন')),
                             ],
                           ),
                         ),
@@ -153,15 +150,15 @@ class _SignupPageState extends State<SignupPage> {
 
                     // ── Fields ─────────────────────────────
                     LabeledTextField(
-                      label: 'USERNAME',
+                      label: 'USERNAME'.tr(context),
                       controller: _usernameCtrl,
                       icon: Icons.person_outline_rounded,
-                      hint: 'e.g. alim',
+                      hint: 'e.g. alim'.tr(context),
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 14),
                     LabeledTextField(
-                      label: 'EMAIL',
+                      label: 'EMAIL'.tr(context),
                       controller: _emailCtrl,
                       icon: Icons.mail_outline_rounded,
                       hint: 'alim@gmail.com',
@@ -170,7 +167,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(height: 14),
                     LabeledTextField(
-                      label: 'PASSWORD',
+                      label: 'PASSWORD'.tr(context),
                       controller: _passwordCtrl,
                       icon: Icons.lock_outline_rounded,
                       hint: '••••••••',
@@ -195,10 +192,10 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 20),
 
                     // ── Role picker ────────────────────────
-                    Text('ROLE',
+                    Text('ROLE'.tr(context),
                       style: TextStyle(
                         fontSize: 11, fontWeight: FontWeight.w700,
-                        color: palette.label, letterSpacing: 0.09,
+                        color: palette.label, letterSpacing: AppStrings.spacing(0.09),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -225,13 +222,13 @@ class _SignupPageState extends State<SignupPage> {
                           child: DropdownButtonFormField<int?>(
                             isExpanded: true,
                             initialValue: _gymsId,
-                            decoration: const InputDecoration(
-                              labelText: 'Gym',
+                            decoration: InputDecoration(
+                              labelText: 'Gym'.tr(context),
                               border: OutlineInputBorder(),
                             ),
                             items: [
-                              const DropdownMenuItem<int?>(
-                                  value: null, child: Text('No gym yet')),
+                              DropdownMenuItem<int?>(
+                                  value: null, child: Text('No gym yet'.tr(context))),
                               for (final g in gyms)
                                 DropdownMenuItem<int?>(
                                     value: g.gymsId, child: Text(g.gymName)),
@@ -266,9 +263,9 @@ class _SignupPageState extends State<SignupPage> {
                                   color: palette.textPrimary, strokeWidth: 2,
                                 ),
                               )
-                            : const FittedBox(
+                            : FittedBox(
                                 fit: BoxFit.scaleDown,
-                                child: Text('Create account',
+                                child: Text('Create account'.tr(context),
                                   style: TextStyle(
                                     fontSize: 15, fontWeight: FontWeight.w700,
                                   ),
@@ -279,7 +276,7 @@ class _SignupPageState extends State<SignupPage> {
 
                     const SizedBox(height: 24),
 
-                    const LabeledDivider(text: 'have an account?'),
+                    LabeledDivider(text: 'have an account?'.tr(context)),
 
                     const SizedBox(height: 16),
 
@@ -287,7 +284,7 @@ class _SignupPageState extends State<SignupPage> {
                     Center(
                       child: TextButton(
                         onPressed: () => context.go(AppRoutes.signin),
-                        child: const Text('Sign in instead',
+                        child: Text('Sign in instead'.tr(context),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

@@ -4,31 +4,41 @@ import '../../core/network/auth_interceptor.dart';
 import '../../core/storage/token_storage.dart';
 import '../../data/datasources/account_remote_datasource.dart';
 import '../../data/datasources/admin_remote_datasource.dart';
+import '../../data/datasources/age_remote_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
+import '../../data/datasources/bmi_remote_datasource.dart';
 import '../../data/datasources/notification_remote_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/datasources/subscription_remote_datasource.dart';
 import '../../data/repositories/account_repository_impl.dart';
 import '../../data/repositories/admin_repository_impl.dart';
+import '../../data/repositories/age_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../data/repositories/bmi_repository_impl.dart';
 import '../../data/repositories/notification_repository_impl.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 import '../../data/repositories/subscription_repository_impl.dart';
 import '../../data/services/local_reminder_scheduler.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/admin_repository.dart';
+import '../../domain/repositories/age_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/repositories/bmi_repository.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/repositories/subscription_repository.dart';
 import '../../domain/services/reminder_scheduler.dart';
 import '../../domain/usecases/activate_subscription_usecase.dart';
+import '../../domain/usecases/get_birth_info_usecase.dart';
+import '../../domain/usecases/get_bmi_usecase.dart';
 import '../../domain/usecases/get_member_subscriptions_usecase.dart';
 import '../../domain/usecases/get_my_subscription_usecase.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
 import '../../domain/usecases/get_profile_usecase.dart';
 import '../../domain/usecases/get_saved_username_usecase.dart';
 import '../../domain/usecases/mark_notifications_read_usecase.dart';
+import '../../domain/usecases/save_birth_info_usecase.dart';
+import '../../domain/usecases/save_bmi_usecase.dart';
 import '../../domain/usecases/signin_usecase.dart';
 import '../../domain/usecases/signout_usecase.dart';
 import '../../domain/usecases/signup_usecase.dart';
@@ -37,8 +47,11 @@ import '../../presentation/blocs/admin/admin_dashboard_cubit.dart';
 import '../../presentation/blocs/admin/admin_gyms_cubit.dart';
 import '../../presentation/blocs/admin/admin_users_cubit.dart';
 import '../../presentation/blocs/admin/gym_options_cubit.dart';
+import '../../presentation/blocs/age/age_cubit.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
+import '../../presentation/blocs/bmi/bmi_cubit.dart';
 import '../../presentation/blocs/current_user/current_user_cubit.dart';
+import '../../presentation/blocs/locale/locale_cubit.dart';
 import '../../presentation/blocs/notifications/notifications_cubit.dart';
 import '../../presentation/blocs/profile/profile_bloc.dart';
 import '../../presentation/blocs/subscription/member_fees_cubit.dart';
@@ -76,6 +89,12 @@ Future<void> setupDependencies() async {
         () => NotificationRemoteDatasourceImpl(sl<Dio>()),
   );
 
+  sl.registerLazySingleton<AgeRemoteDatasource>(
+        () => AgeRemoteDatasourceImpl(sl<Dio>()),
+  );
+  sl.registerLazySingleton<BmiRemoteDatasource>(
+        () => BmiRemoteDatasourceImpl(sl<Dio>()),
+  );
   sl.registerLazySingleton<AdminRemoteDatasource>(
         () => AdminRemoteDatasourceImpl(sl<Dio>()),
   );
@@ -97,6 +116,12 @@ Future<void> setupDependencies() async {
         () => NotificationRepositoryImpl(sl<NotificationRemoteDatasource>()),
   );
 
+  sl.registerLazySingleton<AgeRepository>(
+        () => AgeRepositoryImpl(sl<AgeRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<BmiRepository>(
+        () => BmiRepositoryImpl(sl<BmiRemoteDatasource>()),
+  );
   sl.registerLazySingleton<AdminRepository>(
         () => AdminRepositoryImpl(sl<AdminRemoteDatasource>()),
   );
@@ -128,6 +153,12 @@ Future<void> setupDependencies() async {
         () => MarkNotificationsReadUseCase(sl<NotificationRepository>()),
   );
 
+  sl.registerLazySingleton(() => GetBirthInfoUseCase(sl<AgeRepository>()));
+  sl.registerLazySingleton(() => SaveBirthInfoUseCase(sl<AgeRepository>()));
+
+  sl.registerLazySingleton(() => GetBmiUseCase(sl<BmiRepository>()));
+  sl.registerLazySingleton(() => SaveBmiUseCase(sl<BmiRepository>()));
+
   // BLoCs
   sl.registerFactory(() => AuthBloc(
     sl<SignupUseCase>(),
@@ -148,6 +179,14 @@ Future<void> setupDependencies() async {
     sl<GetNotificationsUseCase>(),
     sl<MarkNotificationsReadUseCase>(),
   ));
+  sl.registerFactory(() => AgeCubit(
+    sl<GetBirthInfoUseCase>(),
+    sl<SaveBirthInfoUseCase>(),
+  ));
+  sl.registerFactory(() => BmiCubit(
+    sl<GetBmiUseCase>(),
+    sl<SaveBmiUseCase>(),
+  ));
   sl.registerFactory(() => AdminDashboardCubit(sl<AdminRepository>()));
   sl.registerFactory(() => AdminUsersCubit(sl<AdminRepository>()));
   sl.registerFactory(
@@ -158,4 +197,5 @@ Future<void> setupDependencies() async {
   sl.registerFactory(() => GymOptionsCubit(sl<AdminRepository>()));
   sl.registerFactory(() => AccountCubit(sl<AccountRepository>()));
   sl.registerLazySingleton(() => ThemeCubit());
+  sl.registerLazySingleton(() => LocaleCubit());
 }

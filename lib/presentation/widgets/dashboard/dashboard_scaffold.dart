@@ -29,8 +29,38 @@ class DashboardScaffold extends StatefulWidget {
   State<DashboardScaffold> createState() => _DashboardScaffoldState();
 }
 
-class _DashboardScaffoldState extends State<DashboardScaffold> {
+class _DashboardScaffoldState extends State<DashboardScaffold>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+
+  // One controller drives every block: each starts a little after the one
+  // above it, so the page builds itself from the top down.
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..forward();
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  Widget _entering(int index, Widget child) {
+    final start = (index * 0.05).clamp(0.0, 0.45);
+    final curve = _entrance.drive(CurveTween(
+      curve: Interval(start, (start + 0.5).clamp(0.0, 1.0),
+          curve: Curves.easeOutCubic),
+    ));
+    return FadeTransition(
+      opacity: curve,
+      child: SlideTransition(
+        position: Tween(begin: const Offset(0, 0.06), end: Offset.zero)
+            .animate(curve),
+        child: child,
+      ),
+    );
+  }
 
   void _onNavTap(int index) {
     if (index == widget.navItems.length - 1) {
@@ -56,7 +86,9 @@ class _DashboardScaffoldState extends State<DashboardScaffold> {
       child: ResponsiveCenter(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: widget.children,
+          children: [
+            for (final (i, child) in widget.children.indexed) _entering(i, child),
+          ],
         ),
       ),
     );

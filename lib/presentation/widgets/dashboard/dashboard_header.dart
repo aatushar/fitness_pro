@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../blocs/current_user/current_user_cubit.dart';
 import '../notification_bell.dart';
-import '../theme_toggle_switch.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Avatar + role line + signed-in user's name, with theme toggle and bell.
 /// Needs a [CurrentUserCubit] above it (provided at the route).
@@ -22,7 +22,7 @@ class DashboardHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final saved = context.watch<CurrentUserCubit>().state;
-    final name = (saved == null || saved.isEmpty) ? fallbackName : saved;
+    final name = (saved == null || saved.isEmpty) ? fallbackName.tr(context) : saved;
 
     return Row(
       children: [
@@ -48,7 +48,7 @@ class DashboardHeader extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(roleLabel,
+            Text(roleLabel.tr(context),
               style: TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w500,
                 color: palette.textMuted,
@@ -58,14 +58,12 @@ class DashboardHeader extends StatelessWidget {
             Text(name,
               style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w800,
-                color: palette.textPrimary, letterSpacing: -0.4,
+                color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.4),
               ),
             ),
           ]),
         ),
         const SizedBox(width: 12),
-        const ThemeToggleSwitch(width: 46, height: 26),
-        const SizedBox(width: 10),
         const NotificationBell(),
       ],
     );

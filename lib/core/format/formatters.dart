@@ -1,18 +1,22 @@
+import '../l10n/app_strings.dart';
+
 const _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
 /// `11 Feb 2027`
-String formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+String formatDate(DateTime d) => AppStrings.digits(
+    '${d.day} ${_months[d.month - 1].trNow} ${d.year}');
 
 /// `11 Feb, 9:05 AM` (with the year when it is not [now]'s year).
 String formatDateTime(DateTime d, {DateTime? now}) {
   final hour12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
   final minute = d.minute.toString().padLeft(2, '0');
-  final period = d.hour < 12 ? 'AM' : 'PM';
+  final period = (d.hour < 12 ? 'AM' : 'PM').trNow;
   final year = d.year == (now ?? DateTime.now()).year ? '' : ' ${d.year}';
-  return '${d.day} ${_months[d.month - 1]}$year, $hour12:$minute $period';
+  return AppStrings.digits(
+      '${d.day} ${_months[d.month - 1].trNow}$year, $hour12:$minute $period');
 }
 
 /// `৳ 1,24,500` — Bangladeshi digit grouping (last 3 digits, then pairs).
@@ -37,7 +41,7 @@ String formatTaka(double amount) {
     grouped = '${pairs.join(',')},$tail';
   }
   final decimals = parts.length > 1 ? '.${parts[1]}' : '';
-  return '${negative ? '-' : ''}৳ $grouped$decimals';
+  return AppStrings.digits('${negative ? '-' : ''}৳ $grouped$decimals');
 }
 
 /// [date] plus [months] calendar months, keeping the day of month but never

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 /// One labelled text field of a [showFormDialog].
 class FormFieldSpec {
@@ -71,7 +72,7 @@ class _FormDialogState extends State<_FormDialog> {
   void _submit() {
     for (var i = 0; i < _ctrls.length; i++) {
       if (!widget.optional.contains(i) && _ctrls[i].text.trim().isEmpty) {
-        setState(() => _error = '${widget.fields[i].label} is required.');
+        setState(() => _error = AppStrings.t(context, '${widget.fields[i].label} is required.', '${widget.fields[i].label} আবশ্যক।'));
         return;
       }
     }
@@ -97,7 +98,7 @@ class _FormDialogState extends State<_FormDialog> {
                     keyboardType: widget.fields[i].keyboard,
                     decoration: InputDecoration(
                       labelText: widget.fields[i].label +
-                          (widget.optional.contains(i) ? ' (optional)' : ''),
+                          (widget.optional.contains(i) ? ' (optional)'.tr(context) : ''),
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -111,12 +112,12 @@ class _FormDialogState extends State<_FormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text('Cancel'.tr(context)),
         ),
         FilledButton(
           onPressed: _submit,
           style: FilledButton.styleFrom(backgroundColor: AppColors.purple),
-          child: Text(widget.confirmLabel),
+          child: Text(widget.confirmLabel.tr(context)),
         ),
       ],
     );
@@ -138,12 +139,12 @@ Future<bool> confirmAction(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
+          child: Text('Cancel'.tr(context)),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
           style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-          child: Text(confirmLabel),
+          child: Text(confirmLabel.tr(context)),
         ),
       ],
     ),

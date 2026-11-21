@@ -3,6 +3,7 @@ import '../../core/network/api_endpoints.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/storage/token_storage.dart';
 import '../models/user_profile_model.dart';
+import '../../core/l10n/app_strings.dart';
 
 abstract class ProfileRemoteDatasource {
   Future<UserProfileModel> getProfile();
@@ -25,7 +26,7 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
         }),
       );
       final data = response.data;
-      if (data == null) throw const ApiException('Empty response from server.');
+      if (data == null) throw ApiException('Empty response from server.'.trNow);
       // /api/profile calls the id field userId.
       return UserProfileModel.fromJson({...data, 'id': data['id'] ?? data['userId']});
     } on DioException catch (e) {

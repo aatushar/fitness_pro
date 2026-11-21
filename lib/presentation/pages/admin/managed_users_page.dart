@@ -8,6 +8,7 @@ import '../../blocs/admin/admin_users_cubit.dart';
 import '../../widgets/app_back_button.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/form_dialog.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Users of the gym. With [manage] true (admin) each row has a menu to
 /// activate/deactivate, change role or delete; otherwise (trainer) it is a
@@ -38,11 +39,11 @@ class ManagedUsersPage extends StatelessWidget {
                         Row(children: [
                           const AppBackButton(),
                           Expanded(
-                            child: Text(manage ? 'Users' : 'My Members',
+                            child: Text(manage ? 'Users'.tr(context) : 'My Members'.tr(context),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w700,
-                                color: palette.textPrimary, letterSpacing: -0.3,
+                                color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.3),
                               ),
                             ),
                           ),
@@ -85,10 +86,10 @@ class _Body extends StatelessWidget {
         child: Column(children: [
           Icon(Icons.cloud_off_rounded, size: 44, color: palette.textMuted),
           const SizedBox(height: 12),
-          Text(state.message ?? 'Could not load users.',
+          Text(state.message ?? 'Could not load users.'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: palette.textMuted)),
-          TextButton(onPressed: cubit.load, child: const Text('Try again')),
+          TextButton(onPressed: cubit.load, child: Text('Try again'.tr(context))),
         ]),
       );
     }
@@ -103,7 +104,7 @@ class _Body extends StatelessWidget {
         TextField(
           onChanged: cubit.setSearch,
           decoration: InputDecoration(
-            hintText: 'Search name, email or phone',
+            hintText: 'Search name, email or phone'.tr(context),
             hintStyle: TextStyle(fontSize: 13, color: palette.textMuted),
             prefixIcon: Icon(Icons.search_rounded, color: palette.textMuted),
             filled: true,
@@ -119,7 +120,7 @@ class _Body extends StatelessWidget {
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final r in <String?>[null, ...ManagedUsersPage._roles])
               ChoiceChip(
-                label: Text(r ?? 'All'),
+                label: Text((r ?? 'All').tr(context)),
                 selected: state.roleFilter == r,
                 onSelected: (_) => cubit.setRoleFilter(r),
               ),
@@ -130,7 +131,7 @@ class _Body extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text('No users found.',
+              child: Text('No users found.'.tr(context),
                 style: TextStyle(fontSize: 14, color: palette.textMuted)),
             ),
           )
@@ -156,7 +157,7 @@ class _UserTile extends StatelessWidget {
     final cubit = context.read<AdminUsersCubit>();
     final initial = user.username.isEmpty ? '?' : user.username[0].toUpperCase();
     final details = [
-      user.roleLabel,
+      user.roleLabel.tr(context),
       if (user.email.isNotEmpty) user.email,
       if (user.phone != null && user.phone!.isNotEmpty) user.phone!,
     ].join(' · ');
@@ -179,33 +180,33 @@ class _UserTile extends StatelessWidget {
         )),
         if (manage)
           PopupMenuButton<String>(
-            tooltip: 'Actions',
+            tooltip: 'Actions'.tr(context),
             onSelected: (a) async {
               if (a == 'toggle') {
                 await _report(context,
                     cubit.setStatus(user.userId, user.isActive ? 'INACTIVE' : 'ACTIVE'),
-                    user.isActive ? 'User deactivated.' : 'User activated.');
+                    user.isActive ? 'User deactivated.'.tr(context) : 'User activated.'.tr(context));
               } else if (a == 'delete') {
                 final ok = await confirmAction(context,
-                    title: 'Delete user?',
-                    message: '${user.username} will no longer be able to sign in.');
+                    title: 'Delete user?'.tr(context),
+                    message: AppStrings.t(context, '${user.username} will no longer be able to sign in.', '${user.username} আর সাইন ইন করতে পারবেন না।'));
                 if (ok && context.mounted) {
-                  await _report(context, cubit.delete(user.userId), 'User deleted.');
+                  await _report(context, cubit.delete(user.userId), 'User deleted.'.tr(context));
                 }
               } else if (a.startsWith('role:')) {
                 await _report(context, cubit.setRole(user.userId, a.substring(5).toLowerCase()),
-                    'Role updated.');
+                    'Role updated.'.tr(context));
               }
             },
             itemBuilder: (_) => [
               PopupMenuItem(
                 value: 'toggle',
-                child: Text(user.isActive ? 'Deactivate' : 'Activate'),
+                child: Text(user.isActive ? 'Deactivate'.tr(context) : 'Activate'.tr(context)),
               ),
               for (final r in ManagedUsersPage._roles)
                 if (r != user.roleLabel)
-                  PopupMenuItem(value: 'role:$r', child: Text('Make $r')),
-              const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  PopupMenuItem(value: 'role:$r', child: Text(AppStrings.t(context, 'Make $r', '${r.tr(context)} বানান'))),
+              PopupMenuItem(value: 'delete', child: Text('Delete'.tr(context))),
             ],
           ),
       ]),

@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../blocs/age/age_cubit.dart';
+import '../../blocs/bmi/bmi_cubit.dart';
+import '../../widgets/age/age_calculator_card.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/bmi/bmi_card.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/dashboard/dashboard_header.dart';
 import '../../widgets/dashboard/dashboard_scaffold.dart';
 import '../../widgets/section_title.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Owner (ROLE_OWNER) dashboard: owns one or more gyms (T_GYMS.owner_id)
 /// and sees totals across all of them, plus who manages each gym.
@@ -84,40 +90,48 @@ class OwnerDashboardPage extends StatelessWidget {
 
     return DashboardScaffold(
       navItems: _navItems,
+      onRefresh: () => Future.wait([
+        context.read<AgeCubit>().load(),
+        context.read<BmiCubit>().load(),
+      ]),
       children: [
-        const DashboardHeader(roleLabel: 'Gym Owner', fallbackName: 'Owner'),
+        DashboardHeader(roleLabel: 'Gym Owner'.tr(context), fallbackName: 'Owner'.tr(context)),
+        const SizedBox(height: 20),
+        const AgeCalculatorCard(),
+        const SizedBox(height: 20),
+        const BmiCard(),
         const SizedBox(height: 20),
         GradientHeroCard(
           startColor: AppColors.planGradientStart,
           child: HeroFigure(
-            caption: 'TOTAL REVENUE · ALL GYMS',
+            caption: 'TOTAL REVENUE · ALL GYMS'.tr(context),
             value: _taka(total),
-            note: '${_gyms.length} gyms · October 2025',
-            badge: '↑ 9.1% vs last month',
+            note: AppStrings.t(context, '${_gyms.length} gyms · October 2025', '${_gyms.length}টি জিম · অক্টোবর 2025'),
+            badge: '↑ 9.1% vs last month'.tr(context),
           ),
         ),
         const SizedBox(height: 16),
         const StatGrid(items: _stats),
         const SizedBox(height: 20),
-        const SectionTitle('Quick Actions'),
+        SectionTitle('Quick Actions'.tr(context)),
         const SizedBox(height: 10),
         const QuickActionRow(items: _quickActions),
         const SizedBox(height: 20),
-        const SectionTitle('My Gyms'),
+        SectionTitle('My Gyms'.tr(context)),
         const SizedBox(height: 10),
         for (final g in _gyms)
           DashboardListTile(
             leading: const IconBadge(
                 icon: Icons.fitness_center_rounded, color: AppColors.purple),
             title: g.name,
-            subtitle: '${g.city} · ${g.members} members',
+            subtitle: AppStrings.t(context, '${g.city} · ${g.members} members', '${g.city.tr(context)} · ${g.members} জন সদস্য'),
             trailing: StatusChip(
-              label: g.active ? 'Active' : 'Inactive',
+              label: g.active ? 'Active'.tr(context) : 'Inactive'.tr(context),
               tone: g.active ? ChipTone.success : ChipTone.danger,
             ),
           ),
         const SizedBox(height: 10),
-        const SectionTitle('Revenue by Gym'),
+        SectionTitle('Revenue by Gym'.tr(context)),
         const SizedBox(height: 10),
         SurfaceCard(
           child: Column(
@@ -134,14 +148,14 @@ class OwnerDashboardPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        const SectionTitle('Gym Admins'),
+        SectionTitle('Gym Admins'.tr(context)),
         const SizedBox(height: 10),
         for (final a in _admins)
           DashboardListTile(
             leading: InitialsAvatar(initials: a.$1, color: a.$2),
             title: a.$3,
             subtitle: a.$4,
-            trailing: const StatusChip(label: 'Admin', tone: ChipTone.info),
+            trailing: StatusChip(label: 'Admin'.tr(context), tone: ChipTone.info),
           ),
       ],
     );
@@ -199,7 +213,7 @@ class _RevenueBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text('${(share * 100).round()}% of total',
+        Text(AppStrings.t(context, '${(share * 100).round()}% of total', 'মোটের ${(share * 100).round()}%'),
           style: TextStyle(fontSize: 10, color: palette.textMuted),
         ),
       ],

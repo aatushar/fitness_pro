@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/l10n/app_strings.dart';
 
 // Building blocks shared by the role dashboards (owner, admin, trainer, member).
 
@@ -26,6 +27,16 @@ class SurfaceCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.palette.border),
+        // A soft lift on the light theme; dark cards stay flat.
+        boxShadow: context.isDarkTheme
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.purple.withValues(alpha: 0.07),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: child,
     );
@@ -47,7 +58,7 @@ class GradientHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [startColor, AppColors.purple],
@@ -63,9 +74,37 @@ class GradientHeroCard extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      child: Stack(children: [
+        // Decorative glow circles, tucked into the corners.
+        Positioned(
+          right: -36, top: -36,
+          child: _GlowCircle(size: 130, alpha: 0.10),
+        ),
+        Positioned(
+          left: -28, bottom: -52,
+          child: _GlowCircle(size: 110, alpha: 0.07),
+        ),
+        Padding(padding: const EdgeInsets.all(20), child: child),
+      ]),
     );
   }
+}
+
+class _GlowCircle extends StatelessWidget {
+  final double size;
+  final double alpha;
+  const _GlowCircle({required this.size, required this.alpha});
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: Container(
+          width: size, height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: alpha),
+          ),
+        ),
+      );
 }
 
 /// Small uppercase caption, big value and a note — the usual hero content.
@@ -88,25 +127,25 @@ class HeroFigure extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(caption,
-          style: const TextStyle(
+        Text(caption.tr(context),
+          style: TextStyle(
             fontSize: 9, fontWeight: FontWeight.w600,
-            color: Colors.white60, letterSpacing: 0.08,
+            color: Colors.white60, letterSpacing: AppStrings.spacing(0.08),
           ),
         ),
         const SizedBox(height: 6),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text(value,
-            style: const TextStyle(
+          child: Text(AppStrings.digits(value),
+            style: TextStyle(
               fontSize: 30, fontWeight: FontWeight.w800,
-              color: Colors.white, letterSpacing: -0.5,
+              color: Colors.white, letterSpacing: AppStrings.spacing(-0.5),
             ),
           ),
         ),
         const SizedBox(height: 2),
-        Text(note, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+        Text(note.tr(context), style: const TextStyle(fontSize: 12, color: Colors.white54)),
         if (badge != null) ...[
           const SizedBox(height: 12),
           Container(
@@ -115,7 +154,7 @@ class HeroFigure extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(badge!,
+            child: Text(badge!.tr(context),
               style: const TextStyle(
                 fontSize: 9, fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -180,18 +219,18 @@ class _StatTile extends StatelessWidget {
         children: [
           IconBadge(icon: stat.icon, color: stat.color, size: 32),
           const SizedBox(height: 12),
-          Text(stat.value,
+          Text(AppStrings.digits(stat.value),
             style: TextStyle(
               fontSize: 20, fontWeight: FontWeight.w800,
-              color: palette.textPrimary, letterSpacing: -0.3,
+              color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.3),
             ),
           ),
-          Text(stat.label,
+          Text(stat.label.tr(context),
             style: TextStyle(fontSize: 10, color: palette.textMuted),
           ),
           if (stat.trend != null) ...[
             const SizedBox(height: 2),
-            Text(stat.trend!,
+            Text(stat.trend!.tr(context),
               style: TextStyle(
                 fontSize: 9, fontWeight: FontWeight.w600,
                 color: stat.up ? AppColors.success : AppColors.danger,
@@ -274,7 +313,7 @@ class QuickActionRow extends StatelessWidget {
                     child: Column(children: [
                       IconBadge(icon: items[i].icon, color: items[i].color),
                       const SizedBox(height: 6),
-                      Text(items[i].label,
+                      Text(items[i].label.tr(context),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9, fontWeight: FontWeight.w600,
@@ -318,7 +357,7 @@ class StatusChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
+      child: Text(label.tr(context),
         style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: fg),
       ),
     );

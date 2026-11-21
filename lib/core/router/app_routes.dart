@@ -6,6 +6,9 @@ class AppRoutes {
   static const splash          = '/';
   static const signin          = '/signin';
   static const signup          = '/signup';
+
+  /// Animated greeting right after sign-in; its `extra` is the dashboard to open next.
+  static const welcome         = '/welcome';
   static const ownerDashboard   = '/owner-dashboard';
   static const dashboard        = '/dashboard'; // admin (ROLE_MANAGER)
   static const trainerDashboard = '/trainer-dashboard';

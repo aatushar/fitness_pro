@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_palette.dart';
+import '../../core/l10n/app_strings.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;
@@ -10,7 +11,7 @@ class SectionTitle extends StatelessWidget {
     return Text(title,
       style: TextStyle(
         fontSize: 15, fontWeight: FontWeight.w700,
-        color: context.palette.textPrimary, letterSpacing: -0.2,
+        color: context.palette.textPrimary, letterSpacing: AppStrings.spacing(-0.2),
       ),
     );
   }

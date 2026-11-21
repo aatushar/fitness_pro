@@ -8,6 +8,7 @@ import '../../../domain/entities/app_notification_entity.dart';
 import '../../blocs/notifications/notifications_cubit.dart';
 import '../../widgets/app_back_button.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// The signed-in user's notifications, newest first. Needs a [NotificationsCubit].
 class NotificationsPage extends StatelessWidget {
@@ -36,12 +37,12 @@ class NotificationsPage extends StatelessWidget {
                           children: [
                             const AppBackButton(),
                             Expanded(
-                              child: Text('Notifications',
+                              child: Text('Notifications'.tr(context),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w700,
                                   color: palette.textPrimary,
-                                  letterSpacing: -0.3,
+                                  letterSpacing: AppStrings.spacing(-0.3),
                                 ),
                               ),
                             ),
@@ -57,7 +58,7 @@ class NotificationsPage extends StatelessWidget {
                               onPressed: () => context
                                   .read<NotificationsCubit>()
                                   .markAllRead(),
-                              child: const Text('Mark all as read'),
+                              child: Text('Mark all as read'.tr(context)),
                             ),
                           ),
                         _Body(state: state),
@@ -102,15 +103,15 @@ class _Body extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              failed ? state.message ?? 'Could not load notifications.'
-                     : 'No notifications yet',
+              failed ? state.message ?? 'Could not load notifications.'.tr(context)
+                     : 'No notifications yet'.tr(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: palette.textMuted),
             ),
             if (failed)
               TextButton(
                 onPressed: () => context.read<NotificationsCubit>().load(),
-                child: const Text('Try again'),
+                child: Text('Try again'.tr(context)),
               ),
           ],
         ),

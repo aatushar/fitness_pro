@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/di/injection.dart';
+import 'core/l10n/app_strings.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/token_storage.dart';
 import 'core/theme/AppTheme.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
+import 'presentation/blocs/locale/locale_cubit.dart';
 import 'presentation/blocs/theme/theme_cubit.dart';
 
 class FitnessProApp extends StatefulWidget {
@@ -23,16 +26,25 @@ class _FitnessProAppState extends State<FitnessProApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => sl<ThemeCubit>()..loadTheme()),
+        BlocProvider(create: (_) => sl<LocaleCubit>()..loadLanguage()),
         BlocProvider(create: (_) => sl<AuthBloc>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (_, themeMode) => MaterialApp.router(
-          title: 'Fitness Pro',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          routerConfig: _appRouter.router,
+        builder: (_, themeMode) => BlocBuilder<LocaleCubit, AppLanguage>(
+          builder: (_, language) => MaterialApp.router(
+            title: 'Fitness Pro',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            // Material widgets (date/time pickers, back tooltips) follow it too.
+            locale: language.locale,
+            supportedLocales: [
+              for (final l in AppLanguage.values) l.locale,
+            ],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            routerConfig: _appRouter.router,
+          ),
         ),
       ),
     );

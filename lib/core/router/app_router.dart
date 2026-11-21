@@ -12,6 +12,8 @@ import '../../presentation/blocs/current_user/current_user_cubit.dart';
 import '../../presentation/blocs/notifications/notifications_cubit.dart';
 import '../../presentation/blocs/profile/profile_bloc.dart';
 import '../../presentation/blocs/profile/profile_event.dart';
+import '../../presentation/blocs/age/age_cubit.dart';
+import '../../presentation/blocs/bmi/bmi_cubit.dart';
 import '../../presentation/blocs/subscription/member_fees_cubit.dart';
 import '../../presentation/blocs/subscription/my_subscription_cubit.dart';
 import '../../presentation/pages/admin/admin_gyms_page.dart';
@@ -25,6 +27,7 @@ import '../../presentation/pages/owner/owner_dashboard_page.dart';
 import '../../presentation/pages/profile/profile_page.dart';
 import '../../presentation/pages/subscriptions/member_subscriptions_page.dart';
 import '../../presentation/pages/trainer/trainer_dashboard_page.dart';
+import '../../presentation/pages/welcome/welcome_page.dart';
 import '../../presentation/splash/splash_page.dart';
 import 'app_routes.dart';
 
@@ -125,6 +128,15 @@ class AppRouter {
         ],
       ),
       GoRoute(
+        path: AppRoutes.welcome,
+        builder: (_, state) => BlocProvider<CurrentUserCubit>(
+          create: (_) => sl<CurrentUserCubit>()..load(),
+          // Without a target (e.g. a browser refresh) go through sign-in,
+          // which redirects a signed-in user to their dashboard.
+          child: WelcomePage(next: state.extra as String? ?? AppRoutes.signin),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.profile,
         builder: (_, __) => MultiBlocProvider(
           providers: [
@@ -189,6 +201,9 @@ class AppRouter {
             BlocProvider<NotificationsCubit>(
               create: (_) => sl<NotificationsCubit>()..load(),
             ),
+            // Age and BMI cards appear on every role's dashboard.
+            BlocProvider<AgeCubit>(create: (_) => sl<AgeCubit>()..load()),
+            BlocProvider<BmiCubit>(create: (_) => sl<BmiCubit>()..load()),
             ...extraProviders,
           ],
           child: page,

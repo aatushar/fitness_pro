@@ -1,3 +1,12 @@
+import 'package:fitness_pro/domain/entities/birth_info_entity.dart';
+import 'package:fitness_pro/domain/usecases/get_birth_info_usecase.dart';
+import 'package:fitness_pro/domain/usecases/save_birth_info_usecase.dart';
+import 'package:fitness_pro/domain/entities/bmi_category.dart';
+import 'package:fitness_pro/domain/entities/bmi_record_entity.dart';
+import 'package:fitness_pro/domain/usecases/get_bmi_usecase.dart';
+import 'package:fitness_pro/domain/usecases/save_bmi_usecase.dart';
+import 'package:fitness_pro/presentation/blocs/age/age_cubit.dart';
+import 'package:fitness_pro/presentation/blocs/bmi/bmi_cubit.dart';
 import 'package:fitness_pro/presentation/blocs/account/account_cubit.dart';
 import 'package:fitness_pro/presentation/blocs/admin/admin_dashboard_cubit.dart';
 import 'package:fitness_pro/presentation/blocs/admin/admin_gyms_cubit.dart';
@@ -37,8 +46,11 @@ import 'package:fitness_pro/presentation/pages/owner/owner_dashboard_page.dart';
 import 'package:fitness_pro/presentation/pages/subscriptions/member_subscriptions_page.dart';
 import 'package:fitness_pro/presentation/pages/trainer/trainer_dashboard_page.dart';
 import 'package:fitness_pro/presentation/pages/profile/profile_page.dart';
+import 'package:fitness_pro/presentation/pages/welcome/welcome_page.dart';
 import 'package:fitness_pro/presentation/splash/splash_page.dart';
+import 'package:fitness_pro/core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -106,6 +118,32 @@ Widget _dashboard(
           MarkNotificationsReadUseCase(notifications),
         )..load(),
       ),
+      BlocProvider<AgeCubit>(
+        create: (_) {
+          final age = FakeAgeRepository()
+            ..info = BirthInfoEntity(birthDateTime: DateTime(1995, 5, 17, 15, 27));
+          return AgeCubit(GetBirthInfoUseCase(age), SaveBirthInfoUseCase(age))
+            ..load();
+        },
+      ),
+      BlocProvider<BmiCubit>(
+        create: (_) {
+          final bmi = FakeBmiRepository()
+            ..records.addAll([
+              for (var i = 0; i < 5; i++)
+                BmiRecordEntity(
+                  id: i + 1,
+                  heightCm: 175,
+                  weightKg: 78 - i * 2.5,
+                  bmi: BmiCategory.bmiOf(heightCm: 175, weightKg: 78 - i * 2.5),
+                  gender: 'MALE',
+                  ageYears: 30,
+                  createdAt: DateTime(2026, 6 + i, 10),
+                ),
+            ]);
+          return BmiCubit(GetBmiUseCase(bmi), SaveBmiUseCase(bmi))..load();
+        },
+      ),
       ...extra,
     ],
     child: page,
@@ -157,6 +195,7 @@ FakeSubscriptionRepository _gymMembers() => FakeSubscriptionRepository()
 
 final _pages = <String, Widget Function()>{
   'Splash': () => const SplashPage(),
+  'Welcome': () => _dashboard(const WelcomePage(next: '/signin')),
   'Signin': () => const SigninPage(),
   'Signup': () => BlocProvider(
         create: (_) => GymOptionsCubit(FakeAdminRepository())..load(),
@@ -210,7 +249,8 @@ final _pages = <String, Widget Function()>{
 'Profile': () => MultiBlocProvider(        providers: [          BlocProvider(            create: (_) => ProfileBloc(GetProfileUseCase(FakeProfileRepository()))              ..add(LoadProfile()),          ),          BlocProvider(create: (_) => AccountCubit(FakeAccountRepository())..load()),        ],        child: const ProfilePage(),      ),  'Profile error': () => MultiBlocProvider(        providers: [          BlocProvider(            create: (_) => ProfileBloc(GetProfileUseCase(                FakeProfileRepository()..error = StateError('x')))              ..add(LoadProfile()),          ),          BlocProvider(create: (_) => AccountCubit(FakeAccountRepository())..load()),        ],        child: const ProfilePage(),      ),
 };
 
-Widget _app(Widget Function() page, Brightness brightness) {
+Widget _app(Widget Function() page, Brightness brightness,
+    {Locale? locale}) {
   final auth = FakeAuthRepository();
   final router = GoRouter(
     initialLocation: '/page',
@@ -229,6 +269,9 @@ Widget _app(Widget Function() page, Brightness brightness) {
     ],
     child: MaterialApp.router(
       theme: _theme(brightness),
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('bn')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: router,
     ),
   );
@@ -236,6 +279,7 @@ Widget _app(Widget Function() page, Brightness brightness) {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  tearDown(() => AppStrings.current = AppLanguage.english);
 
   for (final page in _pages.entries) {
     for (final size in _sizes.entries) {
@@ -265,6 +309,39 @@ void main() {
             expect(tester.takeException(), isNull);
           });
         }
+      }
+    }
+  }
+
+  // Bangla text is longer and has taller glyphs: nothing may overflow in it either.
+  for (final page in _pages.entries) {
+    for (final size in _sizes.entries) {
+      for (final scale in _textScales) {
+        testWidgets('${page.key} · ${size.key} · text x$scale · bangla',
+            (tester) async {
+          AppStrings.current = AppLanguage.bangla;
+          tester.view.physicalSize = size.value;
+          tester.view.devicePixelRatio = 1;
+          tester.platformDispatcher.textScaleFactorTestValue = scale;
+          addTearDown(tester.view.reset);
+          addTearDown(tester.platformDispatcher.clearAllTestValues);
+
+          await tester.pumpWidget(
+              _app(page.value, Brightness.dark, locale: const Locale('bn')));
+          await tester.pump(const Duration(milliseconds: 100));
+
+          final errors = <Object>[];
+          Object? e;
+          while ((e = tester.takeException()) != null) {
+            errors.add(e!);
+          }
+          expect(
+              errors.map((e) => e is FlutterError ? e.toStringDeep() : '$e').toList(),
+              isEmpty);
+
+          await tester.pump(const Duration(seconds: 3));
+          expect(tester.takeException(), isNull);
+        });
       }
     }
   }

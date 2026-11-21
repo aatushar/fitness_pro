@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_palette.dart';
+import '../../core/l10n/app_strings.dart';
 
 class AppNavItem {
   final IconData icon;
@@ -42,7 +43,7 @@ class AppBottomNav extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Semantics(
                       selected: i == currentIndex,
-                      label: items[i].label,
+                      label: items[i].label.tr(context),
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
                         Icon(items[i].icon,
                           color: i == currentIndex
@@ -60,11 +61,13 @@ class AppBottomNav extends StatelessWidget {
                             ),
                           )
                         else
-                          Text(items[i].label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 9, color: palette.textMuted,
+                          // Scales down instead of cutting the label off.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(items[i].label.tr(context),
+                              style: TextStyle(
+                                fontSize: 9, color: palette.textMuted,
+                              ),
                             ),
                           ),
                       ]),

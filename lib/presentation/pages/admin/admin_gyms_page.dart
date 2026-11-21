@@ -9,6 +9,7 @@ import '../../blocs/admin/admin_users_cubit.dart' show LoadStatus;
 import '../../widgets/app_back_button.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/form_dialog.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Admin page: list, add, edit, deactivate and delete gyms.
 /// Needs an [AdminGymsCubit].
@@ -18,13 +19,13 @@ class AdminGymsPage extends StatelessWidget {
   Future<void> _edit(BuildContext context, [GymEntity? gym]) async {
     final v = await showFormDialog(
       context,
-      title: gym == null ? 'Add gym' : 'Edit gym',
+      title: gym == null ? 'Add gym'.tr(context) : 'Edit gym'.tr(context),
       fields: [
-        FormFieldSpec('Gym name', initial: gym?.gymName ?? ''),
-        FormFieldSpec('Email',
+        FormFieldSpec('Gym name'.tr(context), initial: gym?.gymName ?? ''),
+        FormFieldSpec('Email'.tr(context),
             initial: gym?.gymEmail ?? '', keyboard: TextInputType.emailAddress),
-        FormFieldSpec('City', initial: gym?.city ?? ''),
-        FormFieldSpec('Phone',
+        FormFieldSpec('City'.tr(context), initial: gym?.city ?? ''),
+        FormFieldSpec('Phone'.tr(context),
             initial: gym?.phoneNumber ?? '', keyboard: TextInputType.phone),
       ],
     );
@@ -32,7 +33,7 @@ class AdminGymsPage extends StatelessWidget {
     final error = await context.read<AdminGymsCubit>().save(
         gymsId: gym?.gymsId, name: v[0], email: v[1], city: v[2], phone: v[3]);
     if (context.mounted) {
-      showMessage(context, error ?? (gym == null ? 'Gym added.' : 'Gym updated.'),
+      showMessage(context, error ?? (gym == null ? 'Gym added.'.tr(context) : 'Gym updated.'.tr(context)),
           error: error != null);
     }
   }
@@ -46,7 +47,7 @@ class AdminGymsPage extends StatelessWidget {
         backgroundColor: AppColors.purple,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add gym'),
+        label: Text('Add gym'.tr(context)),
       ),
       body: SafeArea(
         child: BlocBuilder<AdminGymsCubit, AdminGymsState>(
@@ -64,11 +65,11 @@ class AdminGymsPage extends StatelessWidget {
                         Row(children: [
                           const AppBackButton(),
                           Expanded(
-                            child: Text('Gyms',
+                            child: Text('Gyms'.tr(context),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w700,
-                                color: palette.textPrimary, letterSpacing: -0.3,
+                                color: palette.textPrimary, letterSpacing: AppStrings.spacing(-0.3),
                               ),
                             ),
                           ),
@@ -116,10 +117,10 @@ class _Body extends StatelessWidget {
         child: Column(children: [
           Icon(Icons.cloud_off_rounded, size: 44, color: palette.textMuted),
           const SizedBox(height: 12),
-          Text(state.message ?? 'Could not load gyms.',
+          Text(state.message ?? 'Could not load gyms.'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: palette.textMuted)),
-          TextButton(onPressed: cubit.load, child: const Text('Try again')),
+          TextButton(onPressed: cubit.load, child: Text('Try again'.tr(context))),
         ]),
       );
     }
@@ -127,7 +128,7 @@ class _Body extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 60),
         child: Center(
-          child: Text('No gyms yet. Tap "Add gym" to create one.',
+          child: Text('No gyms yet. Tap "Add gym" to create one.'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: palette.textMuted)),
         ),
@@ -151,29 +152,29 @@ class _Body extends StatelessWidget {
               tone: g.isActive ? ChipTone.success : ChipTone.danger,
             )),
             PopupMenuButton<String>(
-              tooltip: 'Actions',
+              tooltip: 'Actions'.tr(context),
               onSelected: (a) async {
                 if (a == 'edit') {
                   onEdit(g);
                 } else if (a == 'toggle') {
                   await _report(context,
                       cubit.setStatus(g.gymsId, g.isActive ? 'INACTIVE' : 'ACTIVE'),
-                      g.isActive ? 'Gym deactivated.' : 'Gym activated.');
+                      g.isActive ? 'Gym deactivated.'.tr(context) : 'Gym activated.'.tr(context));
                 } else if (a == 'delete') {
                   final ok = await confirmAction(context,
-                      title: 'Delete gym?',
-                      message: '${g.gymName} will be removed from the gym list.');
+                      title: 'Delete gym?'.tr(context),
+                      message: AppStrings.t(context, '${g.gymName} will be removed from the gym list.', '${g.gymName} জিমের তালিকা থেকে মুছে যাবে।'));
                   if (ok && context.mounted) {
-                    await _report(context, cubit.delete(g.gymsId), 'Gym deleted.');
+                    await _report(context, cubit.delete(g.gymsId), 'Gym deleted.'.tr(context));
                   }
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(value: 'edit', child: Text('Edit'.tr(context))),
                 PopupMenuItem(
                     value: 'toggle',
-                    child: Text(g.isActive ? 'Deactivate' : 'Activate')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    child: Text(g.isActive ? 'Deactivate'.tr(context) : 'Activate'.tr(context))),
+                PopupMenuItem(value: 'delete', child: Text('Delete'.tr(context))),
               ],
             ),
           ]),

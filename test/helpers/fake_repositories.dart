@@ -2,7 +2,12 @@ import 'package:fitness_pro/domain/entities/address_entity.dart';
 import 'package:fitness_pro/domain/entities/admin_dashboard_entity.dart';
 import 'package:fitness_pro/domain/entities/gym_entity.dart';
 import 'package:fitness_pro/domain/entities/managed_user_entity.dart';
+import 'package:fitness_pro/domain/entities/birth_info_entity.dart';
+import 'package:fitness_pro/domain/entities/bmi_category.dart';
+import 'package:fitness_pro/domain/entities/bmi_record_entity.dart';
+import 'package:fitness_pro/domain/repositories/bmi_repository.dart';
 import 'package:fitness_pro/domain/repositories/account_repository.dart';
+import 'package:fitness_pro/domain/repositories/age_repository.dart';
 import 'package:fitness_pro/domain/repositories/admin_repository.dart';
 import 'package:fitness_pro/domain/entities/app_notification_entity.dart';
 import 'package:fitness_pro/domain/entities/member_subscription_entity.dart';
@@ -189,6 +194,64 @@ class FakeNotificationRepository implements NotificationRepository {
 
   @override
   Future<void> markAllRead() async => calls.add('markAllRead');
+}
+
+/// Keeps the birth info in memory; throws [error] when it is set.
+class FakeAgeRepository implements AgeRepository {
+  Object? error;
+  BirthInfoEntity info = const BirthInfoEntity();
+  final saved = <DateTime>[];
+
+  @override
+  Future<BirthInfoEntity> getBirthInfo() async {
+    if (error != null) throw error!;
+    return info;
+  }
+
+  @override
+  Future<BirthInfoEntity> saveBirthInfo(DateTime birthDateTime) async {
+    if (error != null) throw error!;
+    saved.add(birthDateTime);
+    return info = BirthInfoEntity(
+      birthDateTime: birthDateTime,
+      updatedAt: DateTime(2026, 11, 16),
+    );
+  }
+}
+
+/// Keeps BMI readings in memory; throws [error] when it is set.
+class FakeBmiRepository implements BmiRepository {
+  Object? error;
+  final records = <BmiRecordEntity>[];
+
+  BmiOverviewEntity get _overview => BmiOverviewEntity(
+        latest: records.isEmpty ? null : records.last,
+        history: List.of(records),
+      );
+
+  @override
+  Future<BmiOverviewEntity> getOverview() async {
+    if (error != null) throw error!;
+    return _overview;
+  }
+
+  @override
+  Future<BmiOverviewEntity> save({
+    required double heightCm,
+    required double weightKg,
+    required String gender,
+  }) async {
+    if (error != null) throw error!;
+    records.add(BmiRecordEntity(
+      id: records.length + 1,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      bmi: BmiCategory.bmiOf(heightCm: heightCm, weightKg: weightKg),
+      gender: gender,
+      createdAt: DateTime(2026, 11, 16 + records.length),
+    ));
+    return _overview;
+  }
 }
 
 class FakeReminderScheduler implements ReminderScheduler {

@@ -12,6 +12,7 @@ import '../../widgets/app_back_button.dart';
 import '../../widgets/dashboard/dashboard_cards.dart';
 import '../../widgets/subscription/subscription_status_chip.dart';
 import 'activate_subscription_sheet.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// Admin page: every member with their subscription status, and the button
 /// that records a received fee and gives the member access.
@@ -41,12 +42,12 @@ class MemberSubscriptionsPage extends StatelessWidget {
                           children: [
                             const AppBackButton(),
                             Expanded(
-                              child: Text('Member Fees',
+                              child: Text('Member Fees'.tr(context),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w700,
                                   color: palette.textPrimary,
-                                  letterSpacing: -0.3,
+                                  letterSpacing: AppStrings.spacing(-0.3),
                                 ),
                               ),
                             ),
@@ -89,13 +90,13 @@ class _Content extends StatelessWidget {
           children: [
             Icon(Icons.cloud_off_rounded, size: 44, color: palette.textMuted),
             const SizedBox(height: 12),
-            Text(state.message ?? 'Could not load members.',
+            Text(state.message ?? 'Could not load members.'.tr(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: palette.textMuted),
             ),
             TextButton(
               onPressed: () => context.read<MemberFeesCubit>().load(),
-              child: const Text('Try again'),
+              child: Text('Try again'.tr(context)),
             ),
           ],
         ),
@@ -118,8 +119,8 @@ class _Content extends StatelessWidget {
             child: Center(
               child: Text(
                 state.members.isEmpty
-                    ? 'No members in your gym yet.'
-                    : 'No members match.',
+                    ? 'No members in your gym yet.'.tr(context)
+                    : 'No members match.'.tr(context),
                 style: TextStyle(fontSize: 14, color: palette.textMuted),
               ),
             ),
@@ -139,11 +140,14 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GradientHeroCard(
       child: HeroFigure(
-        caption: 'FEES COLLECTED THIS MONTH',
+        caption: 'FEES COLLECTED THIS MONTH'.tr(context),
         value: formatTaka(summary.collectedThisMonth),
-        note: '${summary.totalMembers} members',
-        badge: '${summary.active} active · ${summary.expiringSoon} ending soon · '
-            '${summary.expired} expired · ${summary.notSubscribed} no plan',
+        note: AppStrings.t(context, '${summary.totalMembers} members', '${summary.totalMembers} জন সদস্য'),
+        badge: AppStrings.t(
+          context,
+          '${summary.active} active · ${summary.expiringSoon} ending soon · ${summary.expired} expired · ${summary.notSubscribed} no plan',
+          '${summary.active} সক্রিয় · ${summary.expiringSoon} শীঘ্রই শেষ · ${summary.expired} মেয়াদ শেষ · ${summary.notSubscribed} প্ল্যান নেই',
+        ),
       ),
     );
   }
@@ -164,7 +168,7 @@ class _SearchField extends StatelessWidget {
       onChanged: context.read<MemberFeesCubit>().setSearch,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Search name, email or phone',
+        hintText: 'Search name, email or phone'.tr(context),
         hintStyle: TextStyle(fontSize: 13, color: palette.textMuted),
         prefixIcon: Icon(Icons.search_rounded, color: palette.textMuted),
         filled: true,
@@ -186,11 +190,11 @@ class _FilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = state.summary;
     final options = <(String, SubscriptionStatus?)>[
-      ('All', null),
-      ('Expired${s == null ? '' : ' (${s.expired})'}', SubscriptionStatus.expired),
-      ('Ending soon${s == null ? '' : ' (${s.expiringSoon})'}', SubscriptionStatus.expiringSoon),
-      ('Active${s == null ? '' : ' (${s.active})'}', SubscriptionStatus.active),
-      ('No plan${s == null ? '' : ' (${s.notSubscribed})'}', SubscriptionStatus.none),
+      ('All'.tr(context), null),
+      ('${'Expired'.tr(context)}${s == null ? '' : ' (${s.expired})'}', SubscriptionStatus.expired),
+      ('${'Ending soon'.tr(context)}${s == null ? '' : ' (${s.expiringSoon})'}', SubscriptionStatus.expiringSoon),
+      ('${'Active'.tr(context)}${s == null ? '' : ' (${s.active})'}', SubscriptionStatus.active),
+      ('${'No plan'.tr(context)}${s == null ? '' : ' (${s.notSubscribed})'}', SubscriptionStatus.none),
     ];
 
     return Wrap(
@@ -219,13 +223,16 @@ class _MemberTile extends StatelessWidget {
   final MemberSubscriptionEntity member;
   const _MemberTile({required this.member});
 
-  String get _subtitle {
+  String _subtitle(BuildContext context) {
     final end = member.endDate;
-    if (end == null) return 'No subscription yet';
+    if (end == null) return 'No subscription yet'.tr(context);
     return switch (member.status) {
-      SubscriptionStatus.expired => 'Expired on ${formatDate(end)}',
-      _ => '${member.daysLeft} ${member.daysLeft == 1 ? 'day' : 'days'} left · '
-          'until ${formatDate(end)}',
+      SubscriptionStatus.expired => AppStrings.t(context,
+          'Expired on ${formatDate(end)}', '${formatDate(end)}-এ মেয়াদ শেষ হয়েছে'),
+      _ => AppStrings.t(
+          context,
+          '${member.daysLeft} ${member.daysLeft == 1 ? 'day' : 'days'} left · until ${formatDate(end)}',
+          '${member.daysLeft} দিন বাকি · ${formatDate(end)} পর্যন্ত'),
     };
   }
 
@@ -261,7 +268,7 @@ class _MemberTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(_subtitle,
+                      Text(_subtitle(context),
                         style: TextStyle(fontSize: 11, color: palette.textMuted),
                       ),
                       if (member.phone != null && member.phone!.isNotEmpty)
@@ -293,7 +300,7 @@ class _MemberTile extends StatelessWidget {
                 ),
                 label: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(renew ? 'Receive fee & renew' : 'Receive fee & activate'),
+                  child: Text(renew ? 'Receive fee & renew'.tr(context) : 'Receive fee & activate'.tr(context)),
                 ),
               ),
             ),

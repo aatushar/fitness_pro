@@ -6,6 +6,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/subscription_entity.dart';
 import '../../blocs/subscription/my_subscription_cubit.dart';
+import '../../../core/l10n/app_strings.dart';
 
 /// The member dashboard's hero card: how long the gym subscription lasts, or
 /// that it has expired and the fee must be paid. Needs a [MySubscriptionCubit].
@@ -30,7 +31,7 @@ class MemberSubscriptionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('MEMBERSHIP PLAN', style: _captionStyle),
+                Text('MEMBERSHIP PLAN'.tr(context), style: _captionStyle),
                 const SizedBox(height: 8),
                 Text(message,
                     style: const TextStyle(color: Colors.white, fontSize: 14)),
@@ -38,7 +39,7 @@ class MemberSubscriptionCard extends StatelessWidget {
                 TextButton(
                   onPressed: () => context.read<MySubscriptionCubit>().load(),
                   style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  child: const Text('Try again'),
+                  child: Text('Try again'.tr(context)),
                 ),
               ],
             ),
@@ -53,9 +54,9 @@ class MemberSubscriptionCard extends StatelessWidget {
 const _activeGradient = [AppColors.planGradientStart, AppColors.purple];
 const _expiredGradient = [AppColors.expiredGradientStart, AppColors.danger];
 
-const _captionStyle = TextStyle(
+TextStyle get _captionStyle => TextStyle(
   fontSize: 10, fontWeight: FontWeight.w600,
-  color: Colors.white60, letterSpacing: 0.08,
+  color: Colors.white60, letterSpacing: AppStrings.spacing(0.08),
 );
 const _smallWhite = TextStyle(fontSize: 10, color: Colors.white54);
 
@@ -148,18 +149,22 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
   String get _planName {
     final minutes = subscription.planMinutes;
     if (minutes != null) {
-      return minutes == 1 ? '1 minute test plan' : '$minutes minutes test plan';
+      return AppStrings.t(
+          context,
+          minutes == 1 ? '1 minute test plan' : '$minutes minutes test plan',
+          '$minutes মিনিটের টেস্ট প্ল্যান');
     }
     final months = subscription.planMonths;
-    if (months == null) return 'No plan yet';
-    return months == 1 ? '1 Month plan' : '$months Months plan';
+    if (months == null) return 'No plan yet'.tr(context);
+    return AppStrings.t(context,
+        months == 1 ? '1 Month plan' : '$months Months plan', '$months মাসের প্ল্যান');
   }
 
   String get _badge => switch (subscription.status) {
-        SubscriptionStatus.active => '✓ Active',
-        SubscriptionStatus.expiringSoon => '⚠ Ending soon',
-        SubscriptionStatus.expired => '✕ Expired',
-        SubscriptionStatus.none => 'Not subscribed',
+        SubscriptionStatus.active => '✓ Active'.tr(context),
+        SubscriptionStatus.expiringSoon => '⚠ Ending soon'.tr(context),
+        SubscriptionStatus.expired => '✕ Expired'.tr(context),
+        SubscriptionStatus.none => 'Not subscribed'.tr(context),
       };
 
   @override
@@ -179,7 +184,7 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('MEMBERSHIP PLAN', style: _captionStyle),
+                    Text('MEMBERSHIP PLAN'.tr(context), style: _captionStyle),
                     const SizedBox(height: 3),
                     Text(_planName,
                       style: const TextStyle(
@@ -224,8 +229,8 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
               ),
               TextSpan(
                 text: s.isTestPlan
-                    ? 'min left'
-                    : (s.daysLeft == 1 ? 'day left' : 'days left'),
+                    ? AppStrings.t(context, 'min left', 'মিনিট বাকি')
+                    : AppStrings.t(context, s.daysLeft == 1 ? 'day left' : 'days left', 'দিন বাকি'),
                 style: const TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w500,
                   color: Colors.white60,
@@ -234,14 +239,14 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
             ])),
             if (s.status == SubscriptionStatus.expiringSoon) ...[
               const SizedBox(height: 6),
-              const Text('Please pay your Gym subscription fee.',
+              Text('Please pay your Gym subscription fee.'.tr(context),
                   style: TextStyle(fontSize: 12, color: Colors.white)),
             ],
           ] else ...[
             Text(
               s.status == SubscriptionStatus.expired
-                  ? 'Subscription expired'
-                  : 'No active subscription',
+                  ? 'Subscription expired'.tr(context)
+                  : 'No active subscription'.tr(context),
               style: const TextStyle(
                 fontSize: 22, fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -250,9 +255,8 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
             const SizedBox(height: 6),
             Text(
               s.status == SubscriptionStatus.expired
-                  ? 'Please pay your Gym subscription fee to keep your access.'
-                  : 'Pay your Gym subscription fee at the front desk and '
-                    'your access will be activated.',
+                  ? 'Please pay your Gym subscription fee to keep your access.'.tr(context)
+                  : 'Pay your Gym subscription fee at the front desk and your access will be activated.'.tr(context),
               style: const TextStyle(fontSize: 12, color: Colors.white),
             ),
           ],
@@ -261,8 +265,8 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
             const SizedBox(height: 12),
             Text(
               bad
-                  ? 'Ended ${formatDateTime(s.expiresAt!)}'
-                  : 'Ends ${formatDateTime(s.expiresAt!)}',
+                  ? AppStrings.t(context, 'Ended ${formatDateTime(s.expiresAt!)}', '${formatDateTime(s.expiresAt!)}-এ শেষ হয়েছে')
+                  : AppStrings.t(context, 'Ends ${formatDateTime(s.expiresAt!)}', '${formatDateTime(s.expiresAt!)}-এ শেষ হবে'),
               style: _smallWhite,
             ),
             const SizedBox(height: 6),
@@ -284,8 +288,8 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
                 ),
                 Expanded(
                   child: Text(
-                    bad ? 'Ended ${formatDate(s.endDate!)}'
-                        : 'Until ${formatDate(s.endDate!)}',
+                    bad ? AppStrings.t(context, 'Ended ${formatDate(s.endDate!)}', '${formatDate(s.endDate!)}-এ শেষ হয়েছে')
+                        : AppStrings.t(context, 'Until ${formatDate(s.endDate!)}', '${formatDate(s.endDate!)} পর্যন্ত'),
                     textAlign: TextAlign.end,
                     style: _smallWhite,
                   ),
@@ -304,7 +308,9 @@ class _SubscriptionDetailsState extends State<_SubscriptionDetails> {
             ),
             const SizedBox(height: 8),
             Text(
-              bad ? '100% used' : '${(s.progress * 100).toInt()}% used',
+              bad
+                  ? AppStrings.t(context, '100% used', '100% ব্যবহৃত')
+                  : AppStrings.t(context, '${(s.progress * 100).toInt()}% used', '${(s.progress * 100).toInt()}% ব্যবহৃত'),
               style: _smallWhite,
             ),
           ],

@@ -4,6 +4,7 @@ import '../../core/network/api_exception.dart';
 import '../models/signin_request_model.dart';
 import '../models/signin_response_model.dart';
 import '../models/signup_request_model.dart';
+import '../../core/l10n/app_strings.dart';
 
 abstract class AuthRemoteDatasource {
   Future<void> signup(SignupRequestModel request);
@@ -31,12 +32,12 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         data: request.toJson(),
       );
       final data = response.data;
-      if (data == null) throw const ApiException('Empty response from server.');
+      if (data == null) throw ApiException('Empty response from server.'.trNow);
       return SigninResponseModel.fromJson(data);
     } on DioException catch (e) {
       throw ApiException.fromDio(
         e,
-        statusMessages: const {401: 'Invalid username or password.'},
+        statusMessages: {401: 'Invalid username or password.'.trNow},
       );
     }
   }

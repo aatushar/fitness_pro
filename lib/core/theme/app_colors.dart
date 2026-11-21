@@ -47,6 +47,20 @@ class AppColors {
   static const planGradientStart    = Color(0xFF1E0A4E);
   static const expiredGradientStart = Color(0xFF3B0D1A);
 
+  // ── Gym welcome animation (athlete figure, weights) ─
+  static const skin           = Color(0xFFF2B98F);
+  static const skinShade      = Color(0xFFD9946A);
+  static const barMetal       = Color(0xFFB8BCC8);
+  static const plateDark      = Color(0xFF2A2538);
+  static const skinLight      = Color(0xFFF8D2B0);
+  static const skinDeep       = Color(0xFF9A5E3F);
+  static const hair           = Color(0xFF1C1411);
+  static const metalLight     = Color(0xFFEEF0F6);
+  static const metalDark      = Color(0xFF555969);
+  static const gymBgTop       = Color(0xFF2A1B4D);
+  static const gymBgBottom    = Color(0xFF07050F);
+  static const shoeWhite      = Color(0xFFF1F1F6);
+
   // ── Status / accents (same in both themes) ─
   static const success        = Color(0xFF10B981);
   static const warning        = Color(0xFFF59E0B);
